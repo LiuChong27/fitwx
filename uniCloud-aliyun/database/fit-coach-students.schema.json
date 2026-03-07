@@ -1,0 +1,60 @@
+{
+  "bsonType": "object",
+  "required": ["coach_id", "student_id"],
+  "permission": {
+    "read": "doc.coach_id == auth.uid || doc.student_id == auth.uid",
+    "create": "auth.uid != null",
+    "update": "doc.coach_id == auth.uid",
+    "delete": "doc.coach_id == auth.uid"
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "coach_id": {
+      "bsonType": "string",
+      "description": "教练用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "student_id": {
+      "bsonType": "string",
+      "description": "学员用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "student_name": {
+      "bsonType": "string",
+      "description": "学员昵称快照"
+    },
+    "student_avatar": {
+      "bsonType": "string",
+      "description": "学员头像快照"
+    },
+    "level": {
+      "bsonType": "string",
+      "description": "训练级别/目标",
+      "maxLength": 50
+    },
+    "total_sessions": {
+      "bsonType": "int",
+      "description": "累计课时",
+      "minimum": 0,
+      "defaultValue": 0
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "状态: 0=待确认, 1=活跃, 2=已结束",
+      "defaultValue": 0
+    },
+    "last_active_date": {
+      "bsonType": "timestamp",
+      "description": "最近活跃时间"
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

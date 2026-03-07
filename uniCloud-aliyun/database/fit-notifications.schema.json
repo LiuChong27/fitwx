@@ -1,0 +1,80 @@
+{
+  "bsonType": "object",
+  "required": ["toUserId", "type", "title", "createdAt"],
+  "permission": {
+    "read": "auth.uid == doc.toUserId",
+    "create": "auth.uid != null",
+    "update": "auth.uid == doc.toUserId",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "通知 ID"
+    },
+    "toUserId": {
+      "bsonType": "string",
+      "description": "接收者用户 ID",
+      "trim": "both"
+    },
+    "fromUserId": {
+      "bsonType": "string",
+      "description": "发送者用户 ID（系统通知可为空）",
+      "trim": "both"
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "通知类型",
+      "enum": ["apply", "accepted", "rejected", "system"]
+    },
+    "title": {
+      "bsonType": "string",
+      "description": "通知标题",
+      "maxLength": 100,
+      "trim": "both"
+    },
+    "content": {
+      "bsonType": "string",
+      "description": "通知内容/说明文案",
+      "maxLength": 500,
+      "trim": "both"
+    },
+    "meetId": {
+      "bsonType": "string",
+      "description": "关联约练 ID（用于跳转）"
+    },
+    "meetTitle": {
+      "bsonType": "string",
+      "description": "约练标题/摘要",
+      "maxLength": 100
+    },
+    "isRead": {
+      "bsonType": "bool",
+      "description": "是否已读",
+      "defaultValue": false
+    },
+    "readAt": {
+      "bsonType": "number",
+      "description": "已读时间戳 (ms)"
+    },
+    "createdAt": {
+      "bsonType": "number",
+      "description": "创建时间戳 (ms)"
+    }
+  },
+  "indexes": [
+    {
+      "name": "idx_toUserId_createdAt",
+      "keyPath": {
+        "toUserId": 1,
+        "createdAt": -1
+      }
+    },
+    {
+      "name": "idx_toUserId_isRead",
+      "keyPath": {
+        "toUserId": 1,
+        "isRead": 1
+      }
+    }
+  ]
+}

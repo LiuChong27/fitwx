@@ -1,0 +1,65 @@
+{
+  "bsonType": "object",
+  "required": ["uid", "sport_type", "location_name"],
+  "permission": {
+    "read": true,
+    "create": "auth.uid != null",
+    "update": "doc.uid == auth.uid",
+    "delete": "doc.uid == auth.uid"
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "uid": {
+      "bsonType": "string",
+      "description": "发布者ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "description": "发布者昵称快照"
+    },
+    "avatar": {
+      "bsonType": "string",
+      "description": "发布者头像快照"
+    },
+    "sport_type": {
+      "bsonType": "string",
+      "description": "运动类型",
+      "enum": ["健身", "瑜伽", "跑步", "球类", "其他"]
+    },
+    "fee_type": {
+      "bsonType": "string",
+      "description": "费用方式",
+      "enum": ["AA制", "请客", "免费"]
+    },
+    "date_str": {
+      "bsonType": "string",
+      "description": "约练时间描述"
+    },
+    "desc": {
+      "bsonType": "string",
+      "description": "详细描述"
+    },
+    "location_name": {
+      "bsonType": "string",
+      "description": "位置名称"
+    },
+    "location_address": {
+      "bsonType": "string",
+      "description": "详细地址"
+    },
+    "location_geo": {
+      "bsonType": "geoPoint",
+      "description": "地理位置坐标"
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

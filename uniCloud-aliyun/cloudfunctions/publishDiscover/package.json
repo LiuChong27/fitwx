@@ -1,0 +1,6 @@
+{
+  "name": "publishDiscover",
+  "version": "1.0.0",
+  "description": "发布 discover 动态",
+  "main": "index.js"
+}

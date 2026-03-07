@@ -1,0 +1,91 @@
+{
+    "name" : "fit",
+    "appid" : "__UNI__5F9D2EE",
+    "description" : "fitmeet",
+    "versionName" : "1.0.0",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "app-plus" : {
+        "usingComponents" : true,
+        "nvueStyleCompiler" : "uni-app",
+        "compilerVersion" : 3,
+        "splashscreen" : {
+            "alwaysShowBeforeRender" : true,
+            "waiting" : true,
+            "autoclose" : true,
+            "delay" : 0
+        },
+        "modules" : {
+            "Camera" : {},
+            "Maps" : {},
+            "Geolocation" : {}
+        },
+        "distribute" : {
+            "android" : {
+                "permissions" : [
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\"/>"
+                ]
+            },
+            "ios" : {},
+            "sdkConfigs" : {
+                "push" : {
+                    "unipush" : null
+                },
+                "maps" : {
+                    "amap" : {
+                        "name" : "amapwNvZOHRE",
+                        "appkey_ios" : "ea22080f643c95a4e07704aed5604346",
+                        "appkey_android" : "ea22080f643c95a4e07704aed5604346"
+                    }
+                },
+                "geolocation" : {
+                    "system" : {
+                        "__platform__" : [ "ios", "android" ]
+                    }
+                }
+            }
+        }
+    },
+    "quickapp" : {},
+    "mp-weixin" : {
+        "appid" : "wx97d8bb89bc935861",
+        "setting" : {
+            "urlCheck" : false,
+            "minified" : true
+        },
+        "usingComponents" : true,
+        "optimization" : {
+            "subPackages" : true
+        },
+        "requiredPrivateInfos" : [ "chooseLocation", "getLocation" ],
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "你的位置信息将用于显示周边运动场所"
+            }
+        }
+    },
+    "uniStatistics" : {
+        "enable" : true
+    },
+    "vueVersion" : "3",
+    "h5" : {
+        "sdkConfigs" : {
+            "maps" : {
+                "tencent" : {
+                    "key" : "IRKBZ-VLFLQ-RZQ5U-2Z7YA-KCPTZ-HFBVI"
+                }
+            }
+        },
+        "devServer" : {
+            "https" : false
+        }
+    }
+}

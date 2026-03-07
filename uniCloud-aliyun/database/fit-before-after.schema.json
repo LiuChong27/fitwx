@@ -1,0 +1,45 @@
+{
+  "bsonType": "object",
+  "required": ["uid", "before", "after"],
+  "permission": {
+    "read": true,
+    "create": "auth.uid != null && auth.uid == doc.uid",
+    "update": "doc.uid == auth.uid",
+    "delete": "doc.uid == auth.uid"
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "uid": {
+      "bsonType": "string",
+      "description": "用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "before": {
+      "bsonType": "string",
+      "description": "改变前照片URL"
+    },
+    "after": {
+      "bsonType": "string",
+      "description": "改变后照片URL"
+    },
+    "note": {
+      "bsonType": "string",
+      "description": "备注描述",
+      "maxLength": 200
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "状态: 0=待审核, 1=正常, 2=已删除",
+      "defaultValue": 1
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

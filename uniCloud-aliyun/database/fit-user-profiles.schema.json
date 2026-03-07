@@ -1,0 +1,86 @@
+{
+  "bsonType": "object",
+  "required": ["uid"],
+  "permission": {
+    "read": "doc.uid == auth.uid",
+    "create": "auth.uid != null && auth.uid == doc.uid",
+    "update": "doc.uid == auth.uid",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "uid": {
+      "bsonType": "string",
+      "description": "用户ID，与 uni-id-users._id 关联",
+      "foreignKey": "uni-id-users._id"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "description": "昵称",
+      "trim": "both",
+      "minLength": 2,
+      "maxLength": 20
+    },
+    "gender": {
+      "bsonType": "string",
+      "description": "性别",
+      "enum": ["男", "女"]
+    },
+    "age": {
+      "bsonType": "int",
+      "description": "年龄",
+      "minimum": 12,
+      "maximum": 80
+    },
+    "city": {
+      "bsonType": "string",
+      "description": "城市",
+      "trim": "both",
+      "maxLength": 20
+    },
+    "single_cert": {
+      "bsonType": "bool",
+      "description": "单身认证",
+      "defaultValue": false
+    },
+    "gyms": {
+      "bsonType": "array",
+      "description": "常去健身房列表（最多6个）",
+      "maxItems": 6,
+      "items": {
+        "bsonType": "string"
+      }
+    },
+    "cover_url": {
+      "bsonType": "string",
+      "description": "个人主页封面图URL"
+    },
+    "avatar_url": {
+      "bsonType": "string",
+      "description": "头像URL"
+    },
+    "bio": {
+      "bsonType": "string",
+      "description": "个人简介",
+      "maxLength": 200
+    },
+    "is_coach": {
+      "bsonType": "bool",
+      "description": "是否为教练",
+      "defaultValue": false
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "update_date": {
+      "bsonType": "timestamp",
+      "description": "更新时间"
+    }
+  }
+}

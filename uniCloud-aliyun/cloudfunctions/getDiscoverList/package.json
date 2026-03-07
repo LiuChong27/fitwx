@@ -1,0 +1,6 @@
+{
+  "name": "getDiscoverList",
+  "version": "1.0.0",
+  "description": "获取 discover 列表",
+  "main": "index.js"
+}

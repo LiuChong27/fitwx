@@ -1,0 +1,44 @@
+{
+  "bsonType": "object",
+  "required": ["members"],
+  "permission": {
+    "read": "auth.uid in doc.members",
+    "create": "auth.uid != null",
+    "update": "auth.uid in doc.members",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "members": {
+      "bsonType": "array",
+      "description": "会话成员ID数组（双方）",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "bsonType": "string"
+      }
+    },
+    "last_message": {
+      "bsonType": "string",
+      "description": "最后一条消息摘要",
+      "maxLength": 100
+    },
+    "last_sender_id": {
+      "bsonType": "string",
+      "description": "最后发送者ID"
+    },
+    "last_message_date": {
+      "bsonType": "timestamp",
+      "description": "最后消息时间"
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

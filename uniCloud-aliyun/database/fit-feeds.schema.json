@@ -1,0 +1,116 @@
+{
+  "bsonType": "object",
+  "required": ["user_id", "content"],
+  "permission": {
+    "read": true,
+    "create": "auth.uid != null",
+    "update": "doc.user_id == auth.uid",
+    "delete": "doc.user_id == auth.uid"
+  },
+  "properties": {
+    "_id": {
+      "description": "动态ID"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "发布者用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "description": "发布者昵称",
+      "trim": "both"
+    },
+    "avatar": {
+      "bsonType": "string",
+      "description": "发布者头像URL"
+    },
+    "gender": {
+      "bsonType": "string",
+      "description": "发布者性别",
+      "enum": ["male", "female", "unknown"],
+      "defaultValue": "unknown"
+    },
+    "cover": {
+      "bsonType": "string",
+      "description": "封面图URL"
+    },
+    "content": {
+      "bsonType": "string",
+      "description": "动态内容",
+      "trim": "both",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "运动类型: gym/run/yoga/bodyweight/pilates/boxing",
+      "enum": ["gym", "run", "yoga", "bodyweight", "pilates", "boxing"],
+      "defaultValue": "gym"
+    },
+    "level": {
+      "bsonType": "string",
+      "description": "运动级别: beginner/intermediate/pro",
+      "enum": ["beginner", "intermediate", "pro"],
+      "defaultValue": "beginner"
+    },
+    "location": {
+      "bsonType": "string",
+      "description": "地点名称"
+    },
+    "location_geo": {
+      "bsonType": "object",
+      "description": "地理位置坐标 GeoJSON Point",
+      "properties": {
+        "type": {
+          "bsonType": "string"
+        },
+        "coordinates": {
+          "bsonType": "array",
+          "description": "[经度, 纬度]"
+        }
+      }
+    },
+    "tags": {
+      "bsonType": "array",
+      "description": "标签数组",
+      "items": {
+        "bsonType": "string"
+      }
+    },
+    "like_count": {
+      "bsonType": "int",
+      "description": "点赞数",
+      "defaultValue": 0,
+      "minimum": 0
+    },
+    "comment_count": {
+      "bsonType": "int",
+      "description": "评论数",
+      "defaultValue": 0,
+      "minimum": 0
+    },
+    "gift_count": {
+      "bsonType": "int",
+      "description": "礼物数",
+      "defaultValue": 0,
+      "minimum": 0
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "状态: 0=待审核, 1=正常, 2=已删除",
+      "defaultValue": 1
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "update_date": {
+      "bsonType": "timestamp",
+      "description": "更新时间"
+    }
+  }
+}

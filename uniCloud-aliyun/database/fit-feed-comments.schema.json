@@ -1,0 +1,56 @@
+{
+  "bsonType": "object",
+  "required": ["feed_id", "user_id", "content"],
+  "permission": {
+    "read": true,
+    "create": "auth.uid != null",
+    "update": "doc.user_id == auth.uid",
+    "delete": "doc.user_id == auth.uid"
+  },
+  "properties": {
+    "_id": {
+      "description": "评论ID"
+    },
+    "feed_id": {
+      "bsonType": "string",
+      "description": "动态ID",
+      "foreignKey": "fit-feeds._id"
+    },
+    "user_id": {
+      "bsonType": "string",
+      "description": "评论用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "description": "评论者昵称"
+    },
+    "avatar": {
+      "bsonType": "string",
+      "description": "评论者头像"
+    },
+    "content": {
+      "bsonType": "string",
+      "description": "评论内容",
+      "trim": "both",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "reply_to": {
+      "bsonType": "string",
+      "description": "回复的评论ID"
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "状态: 0=待审核, 1=正常, 2=已删除",
+      "defaultValue": 1
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "评论时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test -- --reporter=verbose
+
+      - name: Test coverage
+        if: matrix.node-version == 20
+        run: npm run test:coverage
+
+  build-h5:
+    name: Build H5
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install uni-app CLI
+        run: npm install -g @dcloudio/uvm && npx @dcloudio/uvm
+
+      - name: Build H5
+        run: npx uni build --platform h5
+        env:
+          NODE_ENV: production
+
+      - name: Upload H5 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: h5-dist
+          path: dist/build/h5
+          retention-days: 7
+
+  build-mp-weixin:
+    name: Build WeChat MP
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install uni-app CLI
+        run: npm install -g @dcloudio/uvm && npx @dcloudio/uvm
+
+      - name: Build WeChat MP
+        run: npx uni build --platform mp-weixin
+        env:
+          NODE_ENV: production
+
+      - name: Upload MP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mp-weixin-dist
+          path: dist/build/mp-weixin
+          retention-days: 7

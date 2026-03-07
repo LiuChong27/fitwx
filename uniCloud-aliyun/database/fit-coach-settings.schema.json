@@ -1,0 +1,53 @@
+{
+  "bsonType": "object",
+  "required": ["uid"],
+  "permission": {
+    "read": "doc.uid == auth.uid",
+    "create": "auth.uid != null && auth.uid == doc.uid",
+    "update": "doc.uid == auth.uid",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "uid": {
+      "bsonType": "string",
+      "description": "教练用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "available": {
+      "bsonType": "bool",
+      "description": "是否接单",
+      "defaultValue": true
+    },
+    "price": {
+      "bsonType": "int",
+      "description": "单次价格(元)",
+      "minimum": 0,
+      "maximum": 99999,
+      "defaultValue": 120
+    },
+    "skills_text": {
+      "bsonType": "string",
+      "description": "擅长项目文本",
+      "maxLength": 200
+    },
+    "intro": {
+      "bsonType": "string",
+      "description": "自我介绍",
+      "maxLength": 500
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    },
+    "update_date": {
+      "bsonType": "timestamp",
+      "description": "更新时间"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "bsonType": "object",
+  "required": ["from_user_id", "to_user_id"],
+  "permission": {
+    "read": "doc.from_user_id == auth.uid || doc.to_user_id == auth.uid",
+    "create": "auth.uid != null",
+    "update": "doc.to_user_id == auth.uid",
+    "delete": "doc.from_user_id == auth.uid && doc.status == 0"
+  },
+  "properties": {
+    "_id": {
+      "description": "约练邀请ID"
+    },
+    "feed_id": {
+      "bsonType": "string",
+      "description": "关联的动态ID (可选)"
+    },
+    "from_user_id": {
+      "bsonType": "string",
+      "description": "发起者用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "from_nickname": {
+      "bsonType": "string",
+      "description": "发起者昵称"
+    },
+    "from_avatar": {
+      "bsonType": "string",
+      "description": "发起者头像"
+    },
+    "to_user_id": {
+      "bsonType": "string",
+      "description": "被邀请者用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "to_nickname": {
+      "bsonType": "string",
+      "description": "被邀请者昵称"
+    },
+    "date": {
+      "bsonType": "string",
+      "description": "约练日期"
+    },
+    "place": {
+      "bsonType": "string",
+      "description": "约练地点"
+    },
+    "message": {
+      "bsonType": "string",
+      "description": "留言",
+      "maxLength": 200
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "状态: 0=待处理, 1=已接受, 2=已拒绝, 3=已取消",
+      "defaultValue": 0
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "update_date": {
+      "bsonType": "timestamp",
+      "description": "更新时间"
+    }
+  }
+}

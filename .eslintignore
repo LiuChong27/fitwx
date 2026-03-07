@@ -1,0 +1,6 @@
+uni_modules/
+unpackage/
+node_modules/
+dist/
+*.min.js
+static/

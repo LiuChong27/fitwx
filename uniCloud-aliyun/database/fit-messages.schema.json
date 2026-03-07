@@ -1,0 +1,48 @@
+{
+  "bsonType": "object",
+  "required": ["conversation_id", "sender_id", "content"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null && auth.uid == doc.sender_id",
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "conversation_id": {
+      "bsonType": "string",
+      "description": "会话ID",
+      "foreignKey": "fit-conversations._id"
+    },
+    "sender_id": {
+      "bsonType": "string",
+      "description": "发送者用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "content": {
+      "bsonType": "string",
+      "description": "消息内容",
+      "maxLength": 2000
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "消息类型",
+      "enum": ["text", "image", "system"],
+      "defaultValue": "text"
+    },
+    "read": {
+      "bsonType": "bool",
+      "description": "是否已读",
+      "defaultValue": false
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

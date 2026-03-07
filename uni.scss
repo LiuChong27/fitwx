@@ -1,0 +1,325 @@
+/**
+ * Shorelines Energy Utilities Design System
+ * 灵感来源: https://dribbble.com/shots/27082991
+ * 深海蓝底色 + 青色/绿色渐变强调 + 极简圆角卡片
+ */
+
+/* ============================================
+   🎨 Shorelines 调色板
+   ============================================ */
+
+/* 行为相关颜色 */
+$uni-color-primary: #00E5FF;
+$uni-color-success: #00E676;
+$uni-color-warning: #FFB74D;
+$uni-color-error: #FF5252;
+
+/* 文字基本颜色 */
+$uni-text-color:#FFFFFF;//基本色
+$uni-text-color-inverse:#0A1628;//反色
+$uni-text-color-grey:rgba(255,255,255,0.55);//辅助灰色
+$uni-text-color-placeholder: rgba(255,255,255,0.35);
+$uni-text-color-disable:rgba(255,255,255,0.25);
+
+/* 背景颜色 */
+$uni-bg-color:#0A1628;
+$uni-bg-color-grey:#0D1B2A;
+$uni-bg-color-hover:rgba(255,255,255,0.06);//点击状态颜色
+$uni-bg-color-mask:rgba(5, 10, 20, 0.75);//遮罩颜色
+
+/* 边框颜色 */
+$uni-border-color:rgba(255,255,255,0.08);
+
+/* 尺寸变量 */
+
+/* 文字尺寸 */
+$uni-font-size-sm:12px;
+$uni-font-size-base:14px;
+$uni-font-size-lg:16;
+
+/* 图片尺寸 */
+$uni-img-size-sm:20px;
+$uni-img-size-base:26px;
+$uni-img-size-lg:40px;
+
+/* Border Radius */
+$uni-border-radius-sm: 8rpx;
+$uni-border-radius-base: 16rpx;  
+$uni-border-radius-lg: 28rpx;
+$uni-border-radius-circle: 50%;
+
+/* 水平间距 */
+$uni-spacing-row-sm: 10rpx;
+$uni-spacing-row-base: 20rpx;
+$uni-spacing-row-lg: 30rpx;
+
+/* 垂直间距 */
+$uni-spacing-col-sm: 8rpx;
+$uni-spacing-col-base: 16rpx;
+$uni-spacing-col-lg: 24rpx;
+
+/* 透明度 */
+$uni-opacity-disabled: 0.3;
+
+/* 文章场景相关 */
+$uni-color-title: #FFFFFF;
+$uni-font-size-title:40rpx;
+$uni-color-subtitle: rgba(255,255,255,0.75);
+$uni-font-size-subtitle:36rpx;
+$uni-color-paragraph: rgba(255,255,255,0.65);
+$uni-font-size-paragraph:30rpx;
+
+/* === Shorelines Design System — Mixins & Variables === */
+
+/* Glassmorphism Configuration */
+$glass-blur-lg: 20px;
+$glass-blur-md: 12px;
+$glass-blur-sm: 6px;
+$glass-bg-dark: rgba(13, 27, 42, 0.75);
+$glass-bg-light: rgba(255, 255, 255, 0.06);
+$glass-border: rgba(255, 255, 255, 0.08);
+
+/* Shorelines Card Surface */
+$sl-card-bg: rgba(13, 27, 42, 0.65);
+$sl-card-bg-solid: #132136;
+$sl-surface: #0D1B2A;
+$sl-cyan: #00E5FF;
+
+/* Neumorphism — adapted for deep navy */
+$neu-dark-bg: #0A1628;
+$neu-dark-shadow-light: rgba(255, 255, 255, 0.03);
+$neu-dark-shadow-deep: rgba(0, 0, 0, 0.45);
+
+/* Gradient Accents */
+$sl-gradient-primary: linear-gradient(135deg, #00E5FF 0%, #00B0FF 100%);
+$sl-gradient-success: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+$sl-gradient-warm: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+$sl-gradient-surface: linear-gradient(180deg, #0D1B2A 0%, #0A1628 100%);
+
+/* --- Glassmorphism Mixins --- */
+@mixin glass-card($bg: $sl-card-bg, $blur: $glass-blur-md) {
+	background: $bg;
+	backdrop-filter: blur($blur);
+	-webkit-backdrop-filter: blur($blur);
+	border: 1px solid $glass-border;
+	box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.2);
+}
+
+@mixin glass-input {
+	@include glass-card(rgba(255,255,255,0.04), $glass-blur-sm);
+	color: #fff;
+	border-radius: 16rpx;
+	padding: 24rpx 28rpx;
+	transition: all 0.3s ease;
+	&:focus {
+		border-color: rgba(0, 229, 255, 0.4);
+		background: rgba(255,255,255,0.06);
+		box-shadow: 0 0 0 3rpx rgba(0, 229, 255, 0.12);
+	}
+}
+
+/* --- Neumorphism Mixins (Deep Navy) --- */
+@mixin neu-flat($bg: $neu-dark-bg, $radius: 16rpx) {
+	background: $bg;
+	border-radius: $radius;
+	box-shadow: 8rpx 8rpx 16rpx $neu-dark-shadow-deep,
+				-8rpx -8rpx 16rpx $neu-dark-shadow-light;
+	border: none;
+}
+
+@mixin neu-pressed($bg: $neu-dark-bg, $radius: 16rpx) {
+	background: $bg;
+	border-radius: $radius;
+	box-shadow: inset 4rpx 4rpx 10rpx $neu-dark-shadow-deep,
+				inset -4rpx -4rpx 10rpx $neu-dark-shadow-light;
+	border: none;
+}
+
+@mixin neu-btn($bg: linear-gradient(145deg, #0F2236, #0A1628)) {
+	background: $bg;
+	box-shadow: 6rpx 6rpx 14rpx $neu-dark-shadow-deep,
+				-6rpx -6rpx 14rpx $neu-dark-shadow-light;
+	border: none;
+	transition: all 0.2s ease;
+	&:active {
+		box-shadow: inset 3rpx 3rpx 8rpx $neu-dark-shadow-deep,
+					inset -3rpx -3rpx 8rpx $neu-dark-shadow-light;
+	}
+}
+
+/* --- Shorelines Specific Mixins --- */
+@mixin sl-card {
+	background: $sl-card-bg-solid;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 28rpx;
+	box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+}
+
+@mixin sl-btn-primary {
+	background: $sl-gradient-primary;
+	border: none;
+	border-radius: 50rpx;
+	color: #0A1628;
+	font-weight: 700;
+	box-shadow: 0 6rpx 24rpx rgba(0, 229, 255, 0.3);
+	transition: all 0.2s ease;
+	&:active {
+		transform: scale(0.97);
+		box-shadow: 0 2rpx 12rpx rgba(0, 229, 255, 0.25);
+	}
+	&::after { border: none; }
+}
+
+@mixin sl-btn-success {
+	background: $sl-gradient-success;
+	border: none;
+	border-radius: 50rpx;
+	color: #0A1628;
+	font-weight: 700;
+	box-shadow: 0 6rpx 24rpx rgba(0, 230, 118, 0.3);
+	transition: all 0.2s ease;
+	&:active {
+		transform: scale(0.97);
+		box-shadow: 0 2rpx 12rpx rgba(0, 230, 118, 0.25);
+	}
+	&::after { border: none; }
+}
+
+/* --- Enterprise Common --- */
+.card-shadow {
+	box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.15);
+}
+.text-gradient {
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+	background-image: $sl-gradient-primary;
+}
+
+/* --- Enhanced Card Interaction --- */
+@mixin sl-card-interactive {
+	@include sl-card;
+	transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+				box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+				border-color 0.25s ease;
+	&:active {
+		transform: scale(0.985);
+		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.25);
+		border-color: rgba(0, 229, 255, 0.12);
+	}
+}
+
+/* --- Skeleton Shimmer (Enhanced) --- */
+@mixin skeleton-shimmer {
+	background: linear-gradient(
+		90deg,
+		#132136 25%,
+		rgba(0, 229, 255, 0.06) 37%,
+		#132136 63%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* --- Glow Effect --- */
+@mixin sl-glow($color: rgba(0, 229, 255, 0.3), $size: 20rpx) {
+	box-shadow: 0 0 $size $color;
+}
+
+/* --- Gradient Text --- */
+@mixin text-gradient($gradient: $sl-gradient-primary) {
+	background: $gradient;
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+}
+
+/* --- Floating Animation --- */
+@mixin float-animation($duration: 3s) {
+	animation: floatSlow $duration ease-in-out infinite;
+}
+@keyframes floatSlow {
+	0%, 100% { transform: translateY(0); }
+	50%      { transform: translateY(-8rpx); }
+}
+
+/* --- Stagger Children Animation --- */
+@mixin stagger-children($delay: 0.06s, $count: 10) {
+	@for $i from 1 through $count {
+		&:nth-child(#{$i}) {
+			animation-delay: #{$i * $delay};
+		}
+	}
+}
+
+/* --- Badge with Pulse --- */
+@mixin badge-pulse {
+	position: relative;
+	&::after {
+		content: '';
+		position: absolute;
+		top: -4rpx;
+		right: -4rpx;
+		width: calc(100% + 8rpx);
+		height: calc(100% + 8rpx);
+		border-radius: inherit;
+		background: inherit;
+		opacity: 0;
+		animation: badgePulse 2s ease-in-out infinite;
+	}
+}
+@keyframes badgePulse {
+	0%, 100% { opacity: 0; transform: scale(1); }
+	50% { opacity: 0.4; transform: scale(1.15); }
+}
+
+/* --- Divider with Glow --- */
+@mixin glow-divider {
+	height: 1rpx;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(0, 229, 255, 0.15),
+		transparent
+	);
+	margin: 24rpx 0;
+}
+
+/* 尺寸变量 */
+
+/* 文字尺寸 */
+$uni-font-size-sm:24rpx;
+$uni-font-size-base:28rpx;
+$uni-font-size-lg:32rpx;
+
+/* 图片尺寸 */
+$uni-img-size-sm:40rpx;
+$uni-img-size-base:52rpx;
+$uni-img-size-lg:80rpx;
+
+/* Border Radius — Shorelines uses generous radii */
+$uni-border-radius-sm: 8rpx;
+$uni-border-radius-base: 16rpx;
+$uni-border-radius-lg: 28rpx;
+$uni-border-radius-circle: 50%;
+
+/* 水平间距 */
+$uni-spacing-row-sm: 10rpx;
+$uni-spacing-row-base: 20rpx;
+$uni-spacing-row-lg: 30rpx;
+
+/* 垂直间距 */
+$uni-spacing-col-sm: 8rpx;
+$uni-spacing-col-base: 16rpx;
+$uni-spacing-col-lg: 24rpx;
+
+/* 透明度 */
+$uni-opacity-disabled: 0.3;
+
+/* 文章场景相关 — adapted for dark Shorelines theme */
+$uni-color-title: #FFFFFF;
+$uni-font-size-title:40rpx;
+$uni-color-subtitle: rgba(255,255,255,0.75);
+$uni-font-size-subtitle:36rpx;
+$uni-color-paragraph: rgba(255,255,255,0.65);
+$uni-font-size-paragraph:30rpx;

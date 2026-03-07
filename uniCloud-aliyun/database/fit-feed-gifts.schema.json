@@ -1,0 +1,47 @@
+{
+  "bsonType": "object",
+  "required": ["feed_id", "from_user_id", "to_user_id", "gift_code"],
+  "permission": {
+    "read": "doc.from_user_id == auth.uid || doc.to_user_id == auth.uid",
+    "create": "auth.uid != null",
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "礼物记录ID"
+    },
+    "feed_id": {
+      "bsonType": "string",
+      "description": "动态ID",
+      "foreignKey": "fit-feeds._id"
+    },
+    "from_user_id": {
+      "bsonType": "string",
+      "description": "赠送者用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "to_user_id": {
+      "bsonType": "string",
+      "description": "接收者用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "gift_code": {
+      "bsonType": "string",
+      "description": "礼物代码: drink/protein/relax/rose",
+      "enum": ["drink", "protein", "relax", "rose"]
+    },
+    "gift_value": {
+      "bsonType": "int",
+      "description": "礼物价值(虚拟币)",
+      "defaultValue": 1
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "赠送时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

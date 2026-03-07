@@ -1,0 +1,49 @@
+{
+  "bsonType": "object",
+  "required": ["uid"],
+  "permission": {
+    "read": "doc.uid == auth.uid",
+    "create": "auth.uid != null && auth.uid == doc.uid",
+    "update": false,
+    "delete": "doc.uid == auth.uid"
+  },
+  "properties": {
+    "_id": {
+      "description": "ID"
+    },
+    "uid": {
+      "bsonType": "string",
+      "description": "用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "type": {
+      "bsonType": "string",
+      "description": "训练类型",
+      "enum": ["gym", "run", "yoga", "bodyweight", "pilates", "boxing", "other"],
+      "defaultValue": "gym"
+    },
+    "duration": {
+      "bsonType": "int",
+      "description": "训练时长(分钟)",
+      "minimum": 1,
+      "maximum": 600
+    },
+    "calorie": {
+      "bsonType": "int",
+      "description": "消耗卡路里",
+      "minimum": 0
+    },
+    "note": {
+      "bsonType": "string",
+      "description": "训练备注",
+      "maxLength": 200
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "forceDefaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}
