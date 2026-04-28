@@ -1,4 +1,4 @@
-<template>
+﻿<template>
 	<view class="profile-page">
 		<!-- #ifdef APP -->
 		<statusBar />
@@ -50,7 +50,7 @@
 						<text class="meta-text login-hint" @click="toUserInfo">点击登录/注册</text>
 					</view>
 				</view>
-				<view class="profile-action" role="button" aria-label="编辑资料" @click="openEditProfile">
+				<view class="profile-action" role="button" aria-label="完善资料" @click="openEditProfile">
 					<uni-icons type="compose" size="22" color="rgba(255,255,255,0.6)" />
 				</view>
 			</view>
@@ -70,65 +70,7 @@
 			</view>
 		</view>
 
-		<!-- ====== 数据统计卡片 ====== -->
-		<view class="stats-card" v-if="!loading || stats.days > 0 || stats.times > 0">
-			<view class="card-header">
-				<text class="card-title">训练数据</text>
-				<text class="card-link" @click="logWorkout">+ 记录训练</text>
-			</view>
-			<view class="stats-row">
-				<view class="stat-item" v-for="item in statsList" :key="item.key">
-					<view class="ring-wrap">
-						<view class="ring-bg" />
-						<view class="ring-fill" :class="item.ringClass" :style="ringFillStyle(item.value, item.key)" />
-						<text class="ring-num">{{ item.display }}</text>
-					</view>
-					<text class="stat-label">{{ item.label }}</text>
-				</view>
-			</view>
-			<!-- Before / After 对比 -->
-			<view class="ba-section" v-if="beforeAfterList.length">
-				<view class="ba-header">
-					<text class="ba-title">Before / After</text>
-					<text class="card-link" @click="addBeforeAfter">+ 新增</text>
-				</view>
-				<swiper class="ba-swiper" :indicator-dots="true" :autoplay="true" interval="3500" circular>
-					<swiper-item v-for="(item, i) in beforeAfterList" :key="i">
-						<view class="ba-item">
-							<view class="ba-half">
-								<text class="ba-label">Before</text>
-								<image class="ba-img" :src="item.before" mode="aspectFill" />
-							</view>
-							<view class="ba-half">
-								<text class="ba-label">After</text>
-								<image class="ba-img" :src="item.after" mode="aspectFill" />
-							</view>
-						</view>
-					</swiper-item>
-				</swiper>
-			</view>
-			<!-- BA 空状态引导 -->
-			<view class="ba-section" v-else-if="hasLogin && !loading">
-				<view class="ba-empty" @click="addBeforeAfter">
-					<uni-icons type="image" size="28" color="rgba(255,255,255,0.25)" />
-					<text class="ba-empty-text">添加你的 Before / After 对比照</text>
-				</view>
-			</view>
-		</view>
-		<!-- 统计卡骨架屏 -->
-		<view class="stats-card skeleton-card" v-else-if="loading">
-			<view class="card-header">
-				<view class="skeleton-line skeleton-pulse" style="width:30%;height:28rpx;" />
-			</view>
-			<view class="stats-row">
-				<view class="stat-item" v-for="i in 3" :key="i">
-					<view class="skeleton-circle skeleton-pulse" style="width:100rpx;height:100rpx;margin-bottom:12rpx;" />
-					<view class="skeleton-line skeleton-pulse" style="width:80rpx;height:22rpx;" />
-				</view>
-			</view>
-		</view>
-
-		<!-- ====== 加载失败重试 ====== -->
+		<!-- ====== 数据加载状态 ====== -->
 		<view class="error-card" v-if="loadError && !loading">
 			<uni-icons type="info" size="36" color="rgba(255,255,255,0.3)" />
 			<text class="error-text">数据加载失败</text>
@@ -185,7 +127,7 @@
 			</view>
 		</view>
 
-		<!-- ====== 编辑资料弹窗 ====== -->
+		<!-- ====== 完善资料弹窗 ====== -->
 		<edit-profile-popup
 			ref="editPopup"
 			:profile="profile"
@@ -194,7 +136,7 @@
 			@choose-avatar="chooseAvatar"
 		/>
 
-		<!-- ====== 教练接单设置弹窗 ====== -->
+		<!-- ====== 接单设置弹窗 ====== -->
 		<coach-settings-popup
 			ref="coachPopup"
 			:settings="coachSettings"
@@ -214,6 +156,13 @@
 			:summary="incomeSummary"
 			:records="incomeRecords"
 		/>
+		<training-stats-popup
+			ref="trainingStatsPopup"
+			:stats-list="statsList"
+			:before-after-list="beforeAfterList"
+			@log-workout="logWorkout"
+			@add-before-after="addBeforeAfter"
+		/>
 
 		<uni-sign-in ref="signIn" />
 	</view>
@@ -230,9 +179,11 @@
 	import CoachSettingsPopup from './components/coach-settings-popup.vue';
 	import StudentsPopup from './components/students-popup.vue';
 	import IncomePopup from './components/income-popup.vue';
+	import TrainingStatsPopup from './components/training-stats-popup.vue';
 	import { coverUrl, avatarUrl as optimizedAvatar } from '@/common/imageOptimizer.js';
+	import { useUserStore } from '@/store/user.js';
 
-	/** 环形进度条最大值配置 */
+	/** 环形进度最大值配置 */
 	const RING_MAX = { days: 30, times: 60, calorie: 50 };
 
 	/** 本地缓存 key 配置 */
@@ -246,34 +197,36 @@
 	// 统一存储服务
 	import storage from '@/common/storage.js';
 	import tabCacheMixin from '@/common/tabCacheMixin.js';
-
-	/** 默认封面图 */
-	const DEFAULT_COVER = '/static/uni-center/default-cover.png';
+	import networkResumeMixin from '@/common/networkResumeMixin.js';
 
 	export default {
-		mixins: [tabCacheMixin],
+		mixins: [tabCacheMixin, networkResumeMixin],
 		tabCacheKeys: ['profile', 'stats', 'isCoachMode', 'beforeAfterList'],
-		// #ifdef APP
-		components: { statusBar, EditProfilePopup, CoachSettingsPopup, StudentsPopup, IncomePopup },
-		// #endif
-		// #ifndef APP
-		components: { EditProfilePopup, CoachSettingsPopup, StudentsPopup, IncomePopup },
-		// #endif
+		components: {
+			// #ifdef APP
+			statusBar,
+			// #endif
+			EditProfilePopup,
+			CoachSettingsPopup,
+			StudentsPopup,
+			IncomePopup,
+			TrainingStatsPopup,
+		},
 
 		data() {
 			return {
-				// ── 页面状态 ──
+				// 页面状态
 				loading: false,
 				saving: false,
 				refreshing: false,
 				loadError: false,
 				isCoachMode: false,
 
-				// ── 本地缓存图片 ──
+				// 本地缓存图片
 				localCover: '',
 				localAvatar: '',
 
-				// ── 用户资料 ──
+				// 用户资料
 				profile: {
 					nickname: '',
 					gender: '',
@@ -284,17 +237,18 @@
 					coverUrl: '',
 					avatarUrl: '',
 					bio: '',
+					isCoach: false,
 				},
 
-				// ── 训练统计 ──
+				// 训练统计
 				stats: { days: 0, times: 0, calorie: 0 },
 
-				// ── 对比照片 ──
+				// 对比照片
 				beforeAfterList: [],
 
-				// ── 编辑表单 (已移入 EditProfilePopup 子组件) ──
+				// 编辑表单已拆分到 EditProfilePopup 组件
 
-				// ── 教练相关 ──
+				// 教练相关
 				coachSettings: {
 					available: true,
 					price: 120,
@@ -305,8 +259,8 @@
 				incomeSummary: { month: 0, total: 0 },
 				incomeRecords: [],
 
-				// ── 登录状态追踪 ──
-				_prevLoginState: false,
+				// 登录状态追踪
+				prevLoginState: false,
 			};
 		},
 
@@ -319,7 +273,7 @@
 			hasLogin() {
 				return store.hasLogin;
 			},
-			/** 显示名称（优先本地 profile，其次 store，最后 fallback） */
+			/** 显示名称：优先 profile，其次 store，最后兜底 */
 			displayName() {
 				if (this.profile.nickname) return this.profile.nickname;
 				const u = this.userInfo;
@@ -329,7 +283,7 @@
 				if (this.hasLogin) return '新用户';
 				return this.$t('mine.notLogged');
 			},
-			/** 封面图来源（本地优先 → 云端 → 默认）+ WebP 自动转换 */
+			/** 封面图来源：本地优先，其次云端 */
 			coverSrc() {
 				if (this.localCover) return this.localCover;
 				const raw = (this.hasLogin && this.profile.coverUrl)
@@ -338,7 +292,7 @@
 					|| '';
 				return raw ? coverUrl(raw) : '';
 			},
-			/** 头像来源 + WebP 自动转换 */
+			/** 头像来源 */
 			avatarSrc() {
 				if (this.localAvatar) return this.localAvatar;
 				const raw = (this.hasLogin && this.profile.avatarUrl)
@@ -347,19 +301,19 @@
 					|| '';
 				return raw ? optimizedAvatar(raw) : '';
 			},
-			/** 个人简介摘要 */
+			/** 个人资料摘要 */
 			profileSummary() {
 				const parts = [];
 				if (this.profile.gender) parts.push(this.profile.gender);
 				if (this.profile.age) parts.push(this.profile.age + '岁');
-				if (this.profile.city) parts.push('📍 ' + this.profile.city);
+				if (this.profile.city) parts.push('城市 ' + this.profile.city);
 				return parts.join(' · ') || '完善你的个人资料';
 			},
 			/** 是否有健身房标签 */
 			hasGyms() {
 				return this.profile.gyms && this.profile.gyms.length > 0;
 			},
-			/** 统计项列表（数据驱动渲染） */
+			/** 统计项列表 */
 			statsList() {
 				const fmt = (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : String(v);
 				return [
@@ -379,8 +333,13 @@
 			roleMenus() {
 				if (!this.isCoachMode) {
 					return [
-						{ icon: '📝', title: '我的动态', handler: () => this.goMyPosts() },
+						{ icon: '📝', title: '我的笔记', handler: () => this.goMyPosts() },
 						{ icon: '🤝', title: '我的约练', handler: () => this.goMyMeets() },
+					];
+				}
+				if (!this.isCoachVerified) {
+					return [
+						{ icon: '🛡️', title: '申请教练认证', handler: () => this.promptCoachApply() },
 					];
 				}
 				return [
@@ -392,16 +351,20 @@
 			/** 通用功能菜单 */
 			commonMenus() {
 				const menus = [
-					{ icon: '🪪', title: '编辑资料', handler: () => this.openEditProfile() },
+					{ icon: '🪪', title: '完善资料', handler: () => this.openEditProfile() },
+					{ icon: '📈', title: '训练数据', handler: () => this.openTrainingStats() },
 				];
 				if (this.hasLogin) {
-					menus.push({ icon: '📅', title: this.$t('mine.signIn'), handler: () => this.signIn() });
+					menus.push({ icon: '📍', title: this.$t('mine.signIn'), handler: () => this.signIn() });
 				}
 				menus.push({ icon: '🔧', title: this.$t('mine.settings'), handler: () => this.goSettings() });
 				// #ifdef APP
 				menus.push({ icon: 'ℹ️', title: this.$t('mine.about'), handler: () => this.goAbout() });
 				// #endif
 				return menus;
+			},
+			isCoachVerified() {
+				return !!this.profile.isCoach;
 			},
 		},
 
@@ -416,12 +379,12 @@
 		},
 
 		onLoad() {
-			this._prevLoginState = this.hasLogin;
+			this.prevLoginState = this.hasLogin;
 			this.initPage();
 
-			// 监听登录成功事件（uni-id-pages 登录流程完成后触发）
+			// 监听登录成功事件
 			uni.$on('uni-id-pages-login-success', () => {
-				this._prevLoginState = true;
+				this.prevLoginState = true;
 				// 延迟一帧等待 store.userInfo 更新
 				this.$nextTick(() => {
 					this.syncUserInfo();
@@ -429,9 +392,9 @@
 				});
 			});
 
-			// 监听注销事件
+			// 监听退出登录事件
 			uni.$on('uni-id-pages-logout', () => {
-				this._prevLoginState = false;
+				this.prevLoginState = false;
 				this.resetProfile();
 			});
 		},
@@ -445,10 +408,10 @@
 			this.syncUserInfo();
 			// 检测登录状态变化：刚登录成功时重新拉取远端数据
 			const currentLogin = this.hasLogin;
-			if (currentLogin && !this._prevLoginState) {
+			if (currentLogin && !this.prevLoginState) {
 				this.loadRemoteData();
 			}
-			this._prevLoginState = currentLogin;
+			this.prevLoginState = currentLogin;
 		},
 
 		/** 下拉刷新 */
@@ -472,6 +435,10 @@
 		},
 
 		methods: {
+			onNetworkResume() {
+				if (!this.hasLogin) return;
+				this.loadRemoteData();
+			},
 			notifyError(message) {
 				uni.showToast({ title: message, icon: 'none' });
 			},
@@ -494,10 +461,7 @@
 					}
 				});
 			},
-			// ═══════════════════════════════════
 			// 初始化与数据加载
-			// ═══════════════════════════════════
-
 			/** 页面初始化：先读缓存再拉远端 */
 			async initPage() {
 				this.restoreLocalCache();
@@ -516,6 +480,7 @@
 					coverUrl: '',
 					avatarUrl: '',
 					bio: '',
+					isCoach: false,
 				};
 				this.stats = { days: 0, times: 0, calorie: 0 };
 				this.beforeAfterList = [];
@@ -529,7 +494,7 @@
 			/** 从本地缓存恢复状态 */
 			restoreLocalCache() {
 				try {
-					// 账号切换时，清掉上一个账号的本地封面/头像缓存，避免串号
+					// 账号切换时清理上一账号的本地封面和头像缓存，避免串号
 					const currentUid = this.hasLogin ? this.userInfo._id : '';
 					const lastUid = storage.get(STORAGE_KEYS.lastUid, '');
 					if (currentUid && lastUid && lastUid !== currentUid) {
@@ -546,7 +511,7 @@
 
 					const coachMode = storage.get(STORAGE_KEYS.coachMode, '');
 					if (coachMode !== '') this.isCoachMode = coachMode === '1';
-					// 未登录时不读取封面/头像缓存，避免展示上一个账号的图片
+					// 未登录时不读取封面和头像缓存，避免展示上一个账号的图片
 					if (currentUid) {
 						const cover = storage.get(STORAGE_KEYS.cover, '');
 						if (cover) this.localCover = cover;
@@ -579,7 +544,7 @@
 						this.fetchStudents(),
 						this.fetchIncome(),
 					]);
-					// 如果全部失败，标记加载失败
+					// 如果全部失败则标记加载失败
 					const allFailed = results.every(r => r.status === 'rejected');
 					if (allFailed) {
 						this.loadError = true;
@@ -595,13 +560,13 @@
 				}
 			},
 
-			/** 重新加载（用于错误重试） */
+			/** 重新加载 */
 			retryLoad() {
 				this.loadRemoteData();
 			},
 
 			/** 登录守卫：未登录时跳转登录页 */
-			requireLogin(action) {
+			requireLogin(_action) {
 				if (this.hasLogin) return true;
 				uni.showModal({
 					title: '请先登录',
@@ -624,17 +589,14 @@
 				if (u.city) this.profile.city = u.city;
 			},
 
-			// ═══════════════════════════════════
 			// 远端数据获取
-			// ═══════════════════════════════════
-
 			async fetchProfile() {
 				try {
 					const res = await apiService.getProfile();
 					if (!res) return;
 					const gyms = Array.isArray(res.gyms)
 						? res.gyms
-						: (res.gyms || '').split(/[,，]/).map(g => g.trim()).filter(Boolean);
+						: (res.gyms || '').split(/[,\uFF0C]/).map(g => g.trim()).filter(Boolean);
 					this.profile = { ...this.profile, ...res, gyms };
 				} catch (e) {
 					this.reportError('fetchProfile', e);
@@ -656,7 +618,7 @@
 				try {
 					const res = await apiService.getBeforeAfter();
 					const list = apiService.parseList(res);
-					if (list.length) this.beforeAfterList = list;
+					this.beforeAfterList = list;
 				} catch (e) {
 					this.reportError('fetchBeforeAfter', e);
 					throw e;
@@ -677,7 +639,7 @@
 				try {
 					const res = await apiService.getStudents();
 					const list = apiService.parseList(res);
-					if (list.length) this.students = list;
+					this.students = list;
 				} catch (e) {
 					this.reportError('fetchStudents', e);
 					throw e;
@@ -696,10 +658,7 @@
 				}
 			},
 
-			// ═══════════════════════════════════
 			// 环形进度
-			// ═══════════════════════════════════
-
 			ringFillStyle(value, key) {
 				const max = RING_MAX[key] || 1;
 				const percent = Math.min(1, Number(value) / max);
@@ -715,10 +674,7 @@
 				return { clipPath: poly, WebkitClipPath: poly };
 			},
 
-			// ═══════════════════════════════════
 			// 图片上传
-			// ═══════════════════════════════════
-
 			/** 选择并上传封面 */
 			onCoverTap() {
 				uni.chooseImage({
@@ -752,9 +708,10 @@
 				try {
 					const url = await apiService.uploadImage(filePath);
 					const profileField = type === 'cover' ? 'coverUrl' : 'avatarUrl';
-					await apiService.updateProfile({ [profileField]: url });
+					const updated = await apiService.updateProfile({ [profileField]: url });
 					if (type === 'cover') this.localCover = url;
 					else this.localAvatar = url;
+					this.syncProfilePatch({ ...(updated || {}), [profileField]: url });
 					storage.set(storageKey, url);
 					uni.showToast({ title: `${labelMap[type]}已更新`, icon: 'success' });
 				} catch (e) {
@@ -763,10 +720,7 @@
 				}
 			},
 
-			// ═══════════════════════════════════
 			// 训练记录
-			// ═══════════════════════════════════
-
 			async logWorkout() {
 				if (!this.requireLogin('logWorkout')) return;
 				if (this.saving) return;
@@ -789,7 +743,7 @@
 					count: 2,
 					success: async (res) => {
 						if (!res.tempFilePaths || res.tempFilePaths.length < 2) {
-							return uni.showToast({ title: '请选两张图片', icon: 'none' });
+							return uni.showToast({ title: '请选择两张图片', icon: 'none' });
 						}
 						try {
 							const [beforeUrl, afterUrl] = await Promise.all([
@@ -807,23 +761,19 @@
 				});
 			},
 
-			// ═══════════════════════════════════
 			// 身份切换
-			// ═══════════════════════════════════
-
 			switchMode(val) {
 				this.isCoachMode = val;
 			},
 
-			// ═══════════════════════════════════
 			// 导航
-			// ═══════════════════════════════════
-
 			toUserInfo() {
 				uni.navigateTo({ url: '/uni_modules/uni-id-pages/pages/userinfo/userinfo' });
 			},
 			goMyPosts() {
-				uni.switchTab({ url: '/pages/grid/grid' });
+				storage.set('discover_open_my_posts', '1');
+				storage.set('discover_view_mode', 'mine');
+				uni.switchTab({ url: '/pages/grid/discover' });
 			},
 			goMyMeets() {
 				uni.switchTab({ url: '/pages/meet/meet' });
@@ -832,30 +782,46 @@
 				uni.navigateTo({ url: '/pages/ucenter/settings/settings' });
 			},
 			goAbout() {
-				uni.navigateTo({ url: '/pages/ucenter/about/about' });
+				uni.showModal({
+					title: '关于 FitMeet',
+					content: '关于页面暂未开放，版本与协议信息可在设置中查看。',
+					showCancel: false,
+				});
 			},
 			signIn() {
 				this.$refs.signIn?.open();
 			},
 
-			// ═══════════════════════════════════
-			// 编辑资料弹窗
-			// ═══════════════════════════════════
-
+			// 完善资料弹窗
 			openEditProfile() {
 				if (!this.requireLogin('editProfile')) return;
 				this.$refs.editPopup?.open();
 			},
-
-			onProfileSaved(data) {
-				this.profile = { ...this.profile, ...data };
+			openTrainingStats() {
+				if (!this.requireLogin('openTrainingStats')) return;
+				this.$refs.trainingStatsPopup?.open();
 			},
 
-			// ═══════════════════════════════════
-			// 教练功能
-			// ═══════════════════════════════════
+			onProfileSaved(data) {
+				this.syncProfilePatch(data);
+			},
 
+			syncProfilePatch(data = {}) {
+				this.profile = { ...this.profile, ...data };
+				try {
+					const userStore = useUserStore();
+					userStore.updateProfile({ ...this.profile, ...data });
+				} catch (e) {
+					console.warn('[ucenter] sync profile store failed:', e);
+				}
+			},
+
+			// 教练功能
 			goCoachSettings() {
+				if (!this.isCoachVerified) {
+					this.promptCoachApply();
+					return;
+				}
 				this.$refs.coachPopup?.open();
 			},
 
@@ -864,6 +830,10 @@
 			},
 
 			goStudents() {
+				if (!this.isCoachVerified) {
+					this.promptCoachApply();
+					return;
+				}
 				this.fetchStudents();
 				this.$refs.studentsPopup?.open();
 			},
@@ -895,8 +865,23 @@
 			},
 
 			goIncome() {
+				if (!this.isCoachVerified) {
+					this.promptCoachApply();
+					return;
+				}
 				this.fetchIncome();
 				this.$refs.incomePopup?.open();
+			},
+			promptCoachApply() {
+				uni.showModal({
+					title: '教练认证',
+					content: '教练功能需要完成资料并通过平台审核。请先完善个人资料，审核通过后可开启接单设置。',
+					confirmText: '完善资料',
+					cancelText: '稍后',
+					success: (res) => {
+						if (res.confirm) this.openEditProfile();
+					},
+				});
 			},
 		},
 	};
@@ -1308,7 +1293,7 @@
 		margin-bottom: 64rpx;
 	}
 
-	/* ===== 通用按钮 ===== */
+	/* ===== 閫氱敤鎸夐挳 ===== */
 	.btn-ghost {
 		flex: 1;
 		@include neu-btn;
@@ -1490,7 +1475,7 @@
 		margin-top: 6rpx;
 	}
 
-	/* ===== 收入 ===== */
+	/* ===== 鏀跺叆 ===== */
 	.income-summary {
 		display: flex;
 		gap: 20rpx;
@@ -1546,7 +1531,7 @@
 		font-weight: 600;
 	}
 
-	/* ===== 空状态 ===== */
+	/* ===== 绌虹姸鎬?===== */
 	.empty-tip {
 		display: flex;
 		flex-direction: column;
@@ -1560,7 +1545,7 @@
 		color: rgba(255, 255, 255, 0.3);
 	}
 
-	/* ===== 骨架屏 ===== */
+	/* ===== 楠ㄦ灦灞?===== */
 	.skeleton-card {
 		pointer-events: none;
 	}
@@ -1610,7 +1595,7 @@
 		background: rgba(0, 229, 255, 0.1);
 	}
 
-	/* ===== BA 空状态引导 ===== */
+	/* ===== BA 绌虹姸鎬佸紩瀵?===== */
 	.ba-empty {
 		display: flex;
 		align-items: center;

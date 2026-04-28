@@ -2,12 +2,12 @@
  * 判断Push是否开启
  */
 function isTurnedOnPush(){
-	var isOn = undefined;
+	let isOn = undefined;
 	try{
-		if('iOS' == plus.os.name){
-			var types = 0;
-			var app = plus.ios.invoke('UIApplication', 'sharedApplication');
-			var settings = plus.ios.invoke(app, 'currentUserNotificationSettings');
+		if ('iOS' === plus.os.name) {
+			let types = 0;
+			const app = plus.ios.invoke('UIApplication', 'sharedApplication');
+			const settings = plus.ios.invoke(app, 'currentUserNotificationSettings');
 			if(settings){
 				types = settings.plusGetAttribute('types');
 				plus.ios.deleteObject(settings);
@@ -15,10 +15,10 @@ function isTurnedOnPush(){
 				types = plus.ios.invoke(app, 'enabledRemoteNotificationTypes');
 			}
 			plus.ios.deleteObject(app);
-			isOn = (0!=types);
+			isOn = (0 !== types);
 		}else{
-			var main = plus.android.runtimeMainActivity();
-			var manager = plus.android.invoke('com.igexin.sdk.PushManager', 'getInstance');
+			const main = plus.android.runtimeMainActivity();
+			const manager = plus.android.invoke('com.igexin.sdk.PushManager', 'getInstance');
 			isOn = plus.android.invoke(manager, 'isPushTurnedOn', main);
 		}
 	}catch(e){
@@ -34,14 +34,14 @@ function isTurnedOnPush(){
  */
 function turnOnPush(){
 	try{
-		if('iOS' == plus.os.name){
+		if ('iOS' === plus.os.name) {
 			// 如果设置中没有开启通知，则打开应用的设置界面
 			if(!isTurnedOnPush()){
 				settingInIos();
 			}
 		}else{
-			var main = plus.android.runtimeMainActivity();
-			var manager = plus.android.invoke('com.igexin.sdk.PushManager', 'getInstance');
+			const main = plus.android.runtimeMainActivity();
+			const manager = plus.android.invoke('com.igexin.sdk.PushManager', 'getInstance');
 			plus.android.invoke(manager, 'turnOnPush', main);
 		}
 	}catch(e){
@@ -56,11 +56,11 @@ function turnOnPush(){
  */
 function trunOffPush(){
 	try{
-		if('iOS' == plus.os.name){
+		if ('iOS' === plus.os.name) {
 			// 这里不做任何操作（不引导用户关闭应用的推送能力），应该通知业务服务器不向此用户下发推送消息
 		}else{
-			var main = plus.android.runtimeMainActivity();
-			var manager = plus.android.invoke('com.igexin.sdk.PushManager', 'getInstance');
+			const main = plus.android.runtimeMainActivity();
+			const manager = plus.android.invoke('com.igexin.sdk.PushManager', 'getInstance');
 			plus.android.invoke(manager, 'turnOffPush', main);
 		}
 	}catch(e){
@@ -73,9 +73,9 @@ function trunOffPush(){
  */
 function settingInIos(){
 	try{
-	if('iOS' == plus.os.name){
-		var app = plus.ios.invoke('UIApplication', 'sharedApplication');
-		var setting = plus.ios.invoke('NSURL', 'URLWithString:', 'app-settings:');
+	if ('iOS' === plus.os.name) {
+		const app = plus.ios.invoke('UIApplication', 'sharedApplication');
+		const setting = plus.ios.invoke('NSURL', 'URLWithString:', 'app-settings:');
 		plus.ios.invoke(app, 'openURL:', setting);
 		plus.ios.deleteObject(setting);
 		plus.ios.deleteObject(app);
@@ -88,11 +88,11 @@ function settingInIos(){
  * android打开应用设置页面
  */
 function settingInAndroid(){
-	if (uni.getSystemInfoSync().platform == "android") {
-		var main = plus.android.runtimeMainActivity();
-		var Intent = plus.android.importClass('android.content.Intent');  
-		var Settings = plus.android.importClass('android.provider.Settings');  
-		var intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+	if (uni.getSystemInfoSync().platform === "android") {
+		const main = plus.android.runtimeMainActivity();
+		const Intent = plus.android.importClass('android.content.Intent');  
+		const Settings = plus.android.importClass('android.provider.Settings');  
+		const intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
 		// 安卓跳转设置页面详细查看(https://ask.dcloud.net.cn/question/14732)
 		main.startActivity(intent);
 	}
@@ -101,10 +101,10 @@ function settingInAndroid(){
  * 打开应用设置界面
  */
 function setting(){
-	if (uni.getSystemInfoSync().platform == "ios") {
+	if (uni.getSystemInfoSync().platform === "ios") {
 		settingInIos();
 	}
-	if (uni.getSystemInfoSync().platform == "android") {
+	if (uni.getSystemInfoSync().platform === "android") {
 		settingInAndroid();
 	}
 }

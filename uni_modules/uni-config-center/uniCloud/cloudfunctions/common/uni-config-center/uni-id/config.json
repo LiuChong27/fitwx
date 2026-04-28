@@ -60,8 +60,8 @@
     "tokenExpiresThreshold": 864000,
     "oauth": {
       "weixin": {
-        "appid": "wx97d8bb89bc935861",
-        "appsecret": "b3135ee187c56be6c9e758383159afe4"
+        "appid": "wxce1806469587913a",
+        "appsecret": "697e524a6c3df1b0f88e61ac8fe28b5f"
       }
     }
   },

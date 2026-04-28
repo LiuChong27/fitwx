@@ -3,11 +3,22 @@ import { callFunctionWithToken } from '@/services/cloudCall.js';
 import cache from '@/common/cacheManager.js';
 import perfMonitor from '@/common/perfMonitor.js';
 import { validateText, validateImageFile, ContentType } from '@/common/contentSecurity.js';
+import { ensureLoggedIn } from '@/common/auth.js';
 
 /** 生成请求 ID 用于性能计时 */
 let _reqSeq = 0
 function nextReqId(action) {
     return `${action}_${++_reqSeq}_${Date.now()}`
+}
+
+function getCurrentUserId() {
+    const info = store.userInfo || {}
+    return info._id || ''
+}
+
+function withUserScope(key) {
+    const uid = getCurrentUserId()
+    return uid ? `${key}_${uid}` : key
 }
 
 // NOTE: keep both default and named export for compatibility
@@ -75,9 +86,72 @@ const apiService = {
         }
     },
 
+    /** meet 云函数调用 */
+    async callMeet(action, params = {}) {
+        const rid = nextReqId('meet_' + action)
+        perfMonitor.markApiStart(rid, action)
+        try {
+            const res = await callFunctionWithToken({
+                name: 'fit-meet-api',
+                data: { action, params }
+            });
+            perfMonitor.markApiEnd(rid)
+            if (res.result && res.result.code === 0) {
+                return res.result.data;
+            }
+            throw new Error(res.result?.msg || '请求失败');
+        } catch (err) {
+            perfMonitor.markApiEnd(rid)
+            console.warn(`[meet] ${action} failed:`, err);
+            throw err;
+        }
+    },
+
+    /** maintenance 云函数调用 */
+    async callMaintenance(action, params = {}) {
+        const rid = nextReqId('maint_' + action)
+        perfMonitor.markApiStart(rid, action)
+        try {
+            const res = await callFunctionWithToken({
+                name: 'fit-maintenance-api',
+                data: { action, params }
+            });
+            perfMonitor.markApiEnd(rid)
+            if (res.result && res.result.code === 0) {
+                return res.result.data;
+            }
+            throw new Error(res.result?.msg || '请求失败');
+        } catch (err) {
+            perfMonitor.markApiEnd(rid)
+            console.warn(`[maintenance] ${action} failed:`, err);
+            throw err;
+        }
+    },
+
+    /** report 云函数调用 */
+    async callReport(action, params = {}) {
+        const rid = nextReqId('report_' + action)
+        perfMonitor.markApiStart(rid, action)
+        try {
+            const res = await callFunctionWithToken({
+                name: 'fit-report-api',
+                data: { action, params }
+            });
+            perfMonitor.markApiEnd(rid)
+            if (res.result && res.result.code === 0) {
+                return res.result.data;
+            }
+            throw new Error(res.result?.msg || '请求失败');
+        } catch (err) {
+            perfMonitor.markApiEnd(rid)
+            console.warn(`[report] ${action} failed:`, err);
+            throw err;
+        }
+    },
+
     /**
-     * 资料完整度判断：用于“发布约�?发布动态”解�?
-     * 必填（最小集合）：昵称、头像、性别、年龄、擅长项�?gyms)、个人简�?bio)
+     * 资料完整度判断：用于“发布约练/发布动态”解锁。
+     * 必填（最小集合）：昵称、头像、性别、年龄、擅长项目(gyms)、个人简介(bio)
      */
     isProfileComplete(profile = {}) {
         const nickname = String(profile.nickname || '').trim();
@@ -107,9 +181,15 @@ const apiService = {
             type = 'all',
             level = 'all',
             distanceKm,
+            lat,
+            lng,
+            userId,
+            status,
         } = params;
 
         const numericDistance = Number(distanceKm);
+        const numericLat = Number(lat);
+        const numericLng = Number(lng);
         const requestData = {
             page,
             pageSize,
@@ -117,8 +197,18 @@ const apiService = {
             type,
             level
         };
+        if (userId) {
+            requestData.userId = userId;
+        }
+        if (status !== undefined && status !== null && status !== '') {
+            requestData.status = status;
+        }
         if (Number.isFinite(numericDistance)) {
             requestData.distanceKm = numericDistance;
+        }
+        if (Number.isFinite(numericLat) && Number.isFinite(numericLng)) {
+            requestData.lat = numericLat;
+            requestData.lng = numericLng;
         }
 
         try {
@@ -130,8 +220,12 @@ const apiService = {
     },
 
     async getPublicProfile(userId) {
-        if (!userId) throw new Error('userId is required');
+        if (!userId) throw new Error('缺少用户ID');
         return await this.callCloud('getPublicProfile', { userId });
+    },
+    async getFeedDetail(feedId) {
+        if (!feedId) throw new Error('缺少动态ID');
+        return await this.callCloud('getFeedDetail', { feedId });
     },
     parseList(res) {
         if (!res) return [];
@@ -170,17 +264,20 @@ const apiService = {
             form = { ...form, message: check.sanitized };
         }
         await this.callCloud('sendInvite', {
+            feedId: form.feedId || '',
             toUserId,
             toNickname: form.nickname || '',
             date: form.date,
             place: form.place,
-            message: form.message
+            message: form.message,
+            lat: form.lat,
+            lng: form.lng
         });
         return true;
     },
 
     async removeFeed(feedId) {
-        if (!feedId) throw new Error('feedId is required');
+        if (!feedId) throw new Error('缺少动态ID');
         return await this.callCloud('removeFeed', { feedId });
     },
     async commentFeed(id, content) {
@@ -195,6 +292,16 @@ const apiService = {
             return true;
         } catch (err) {
             console.warn('commentFeed failed:', err);
+            throw err;
+        }
+    },
+    async getFeedComments(id, page = 1, pageSize = 20) {
+        if (!id) throw new Error('缺少动态ID');
+        try {
+            const list = await this.callCloud('getComments', { feedId: id, page, pageSize });
+            return Array.isArray(list) ? list : [];
+        } catch (err) {
+            console.warn('getFeedComments failed:', err);
             throw err;
         }
     },
@@ -235,8 +342,59 @@ const apiService = {
     async publishDiscover(payload = {}) {
         return await this.publishFeed(payload);
     },
+    async getMyFeedStats() {
+        return await this.callCloud('getMyFeedStats');
+    },
+    async submitReport(payload = {}) {
+        return await this.callReport('createReport', payload)
+    },
+    async getReportStats() {
+        return await this.callReport('getReportStats')
+    },
+    async getReportList(payload = {}) {
+        return await this.callReport('getReportList', payload)
+    },
+    async getReportDetail(reportId) {
+        return await this.callReport('getReportDetail', { reportId })
+    },
+    async handleReport(payload = {}) {
+        return await this.callReport('handleReport', payload)
+    },
+    async getNeedsList(payload = {}) {
+        return await this.callMeet('getNeedsList', payload);
+    },
+    async publishNeed(payload = {}) {
+        return await this.callMeet('publishNeed', payload);
+    },
+    async updateNeed(payload = {}) {
+        return await this.callMeet('updateNeed', payload);
+    },
+    async removeNeed(needId) {
+        return await this.callMeet('removeNeed', { needId });
+    },
+    async getCoachList(payload = {}) {
+        return await this.callMeet('getCoachList', payload);
+    },
+    async bookCoach(payload = {}) {
+        return await this.callMeet('bookCoach', payload);
+    },
+    async updateBookingStatus(bookingId, status) {
+        return await this.callMeet('updateBookingStatus', { bookingId, status });
+    },
     async publishMeet(payload) {
-        return await this.callCloud('publishMeet', payload);
+        return await this.publishNeed(payload);
+    },
+    async getMyMeetStats() {
+        return await this.callMeet('getMyMeetStats');
+    },
+    async getMyMeetList(payload = {}) {
+        return await this.callMeet('getMyMeetList', payload);
+    },
+    async getPendingFeedList(payload = {}) {
+        return await this.callMaintenance('getPendingFeedList', payload);
+    },
+    async reviewFeed(payload = {}) {
+        return await this.callMaintenance('reviewFeed', payload);
     },
     async getMyLeads() {
         return await this.callCloud('getMyLeads');
@@ -257,13 +415,27 @@ const apiService = {
         return await this.callCloud('deleteRequest', { id });
     },
     async sendCoachInvite(payload) {
-        return await this.callCloud('sendCoachInvite', payload);
+        return await this.bookCoach(payload);
+    },
+    clearUcenterCache() {
+        ;[
+            withUserScope('user_profile'),
+            withUserScope('user_stats'),
+            withUserScope('before_after'),
+            withUserScope('coach_settings'),
+        ].forEach((key) => cache.remove(key))
     },
     async getProfile() {
-        return await cache.getOrFetch('user_profile', () => this.callUcenter('getProfile'), { ttl: 120 });
+        return await cache.getOrFetch(withUserScope('user_profile'), () => this.callUcenter('getProfile'), { ttl: 120 });
     },
     async updateProfile(payload) {
-        return await cache.optimisticUpdate('user_profile', payload, () => this.callUcenter('updateProfile', payload));
+        const key = withUserScope('user_profile')
+        const current = cache.get(key) || {}
+        const nextProfile = { ...current, ...payload }
+        return await cache.optimisticUpdate(key, nextProfile, async () => {
+            const res = await this.callUcenter('updateProfile', payload)
+            return { ...nextProfile, ...(res || {}) }
+        });
     },
     async uploadImage(filePath) {
         // ── 上传前校验（扩展名 + 文件大小） ──
@@ -308,22 +480,32 @@ const apiService = {
         }
     },
     async getStats() {
-        return await cache.getOrFetch('user_stats', () => this.callUcenter('getStats'), { ttl: 60 });
+        return await cache.getOrFetch(withUserScope('user_stats'), () => this.callUcenter('getStats'), { ttl: 60 });
     },
     async logWorkout(params = {}) {
-        return await this.callUcenter('logWorkout', params);
+        const res = await this.callUcenter('logWorkout', params);
+        cache.remove(withUserScope('user_stats'));
+        return res;
     },
     async getBeforeAfter() {
-        return await cache.getOrFetch('before_after', () => this.callUcenter('getBeforeAfter'), { ttl: 120 });
+        return await cache.getOrFetch(withUserScope('before_after'), () => this.callUcenter('getBeforeAfter'), { ttl: 120 });
     },
     async addBeforeAfter(entry) {
-        return await this.callUcenter('addBeforeAfter', entry);
+        const res = await this.callUcenter('addBeforeAfter', entry);
+        cache.remove(withUserScope('before_after'));
+        return res;
     },
     async getCoachSettings() {
-        return await cache.getOrFetch('coach_settings', () => this.callUcenter('getCoachSettings'), { ttl: 180 });
+        return await cache.getOrFetch(withUserScope('coach_settings'), () => this.callUcenter('getCoachSettings'), { ttl: 180 });
     },
     async updateCoachSettings(settings) {
-        return await cache.optimisticUpdate('coach_settings', settings, () => this.callUcenter('updateCoachSettings', settings));
+        const key = withUserScope('coach_settings')
+        const current = cache.get(key) || {}
+        const nextSettings = { ...current, ...settings }
+        return await cache.optimisticUpdate(key, nextSettings, async () => {
+            const res = await this.callUcenter('updateCoachSettings', settings)
+            return { ...nextSettings, ...(res || {}) }
+        });
     },
     async getStudents() {
         return await this.callUcenter('getStudents');
@@ -335,6 +517,9 @@ const apiService = {
     // ==================== 通知中心 ====================
     /** 分页拉取通知列表 */
     async getNotifications(payload = {}) {
+        if (!ensureLoggedIn({ silent: true })) {
+            throw new Error('请先登录');
+        }
         const { page = 1, pageSize = 20, lastId } = payload;
         const params = { page, pageSize };
         if (lastId) params.lastId = lastId;
@@ -343,17 +528,26 @@ const apiService = {
 
     /** 批量标记已读 */
     async readNotifications(ids = []) {
+        if (!ensureLoggedIn({ silent: true })) {
+            throw new Error('请先登录');
+        }
         if (!ids.length) return { success: true, unreadCount: 0 };
         return await this.callNotification('readNotifications', { ids });
     },
 
     /** 获取未读数（轻量） */
     async getUnreadCount() {
+        if (!ensureLoggedIn({ silent: true })) {
+            throw new Error('请先登录');
+        }
         return await this.callNotification('getUnreadCount');
     },
 
     /** 创建通知（供其他模块调用） */
     async createNotification({ toUserId, type, title, content, meetId, meetTitle }) {
+        if (!ensureLoggedIn({ silent: true })) {
+            throw new Error('请先登录');
+        }
         return await this.callNotification('createNotification', {
             toUserId, type, title, content, meetId, meetTitle
         });
@@ -361,6 +555,9 @@ const apiService = {
 
     /** 全部标记已读 */
     async markAllNotificationsRead() {
+        if (!ensureLoggedIn({ silent: true })) {
+            throw new Error('请先登录');
+        }
         return await this.callNotification('markAllRead');
     }
 };

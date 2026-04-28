@@ -1,26 +1,13 @@
 /**
- * StorageService — 统一本地存储管理
- *
- * 解决问题：
- * 1. 散乱的 uni.setStorageSync / getStorageSync 调用（30+ 处）
- * 2. 无前缀隔离，与三方 SDK 共用命名空间
- * 3. 无 TTL 过期机制
- * 4. 多 key 冗余（fit_user_id / user_id / uid）
- *
- * 用法:
- *   import storage from '@/common/storage.js';
- *   storage.set('user_id', 'xxx');
- *   storage.set('token', 'xxx', 7200);   // 2 小时后过期
- *   storage.get('user_id');               // 'xxx'
- *   storage.remove('user_id');
- *   storage.clearUserScoped();            // 退出登录时清理
+ * StorageService - 统一本地存储管理
  */
 
 const PREFIX = 'fit_';
+const RETRYABLE_STORAGE_ERROR_MARKERS = ['jsapi has no permission', 'invalid running state', 'setStorageSync:fail'];
+const RETRY_DELAYS_MS = [120, 320, 800, 1600, 3200];
+const memoryFallback = new Map();
+const deferredWrites = new Map();
 
-/**
- * 包装存储值：附带元信息（创建时间 + 过期时间）
- */
 function wrap(value, ttlSeconds) {
 	const envelope = {
 		v: value,
@@ -32,15 +19,12 @@ function wrap(value, ttlSeconds) {
 	return envelope;
 }
 
-/**
- * 解包存储值：检查过期
- */
 function unwrap(envelope) {
 	if (!envelope || typeof envelope !== 'object' || !('v' in envelope)) {
 		return undefined;
 	}
 	if (envelope.e && Date.now() > envelope.e) {
-		return undefined; // 已过期
+		return undefined;
 	}
 	return envelope.v;
 }
@@ -49,18 +33,12 @@ function prefixedKey(key) {
 	return `${PREFIX}${key}`;
 }
 
-// ============ 不经过 prefix 的透传 key（兼容三方库） ============
-const RAW_KEYS = new Set([
-	'uni_id_token',
-	'uni_id_token_expired',
-	'uni-id-pages-userInfo',
-]);
+const RAW_KEYS = new Set(['uni_id_token', 'uni_id_token_expired', 'uni-id-pages-userInfo']);
 
 function resolveKey(key) {
 	return RAW_KEYS.has(key) ? key : prefixedKey(key);
 }
 
-// ============ 用户级缓存前缀（退出登录时清理） ============
 const USER_PREFIXES = [
 	`${PREFIX}user_`,
 	`${PREFIX}ucenter_`,
@@ -71,85 +49,155 @@ const USER_PREFIXES = [
 	`${PREFIX}userId`,
 ];
 
-const USER_RAW_KEYS = [
-	'uni_id_token',
-	'uni_id_token_expired',
-];
+const USER_RAW_KEYS = ['uni_id_token', 'uni_id_token_expired'];
+
+function getErrorMessage(error) {
+	return String((error && (error.errMsg || error.message)) || '');
+}
+
+function isRetryableStorageError(error) {
+	const errMsg = getErrorMessage(error);
+	return RETRYABLE_STORAGE_ERROR_MARKERS.some((marker) => errMsg.includes(marker));
+}
+
+function clearDeferredWrite(storageKey) {
+	const entry = deferredWrites.get(storageKey);
+	if (entry && entry.timer) {
+		clearTimeout(entry.timer);
+	}
+	deferredWrites.delete(storageKey);
+}
+
+function clearDeferredWriteByResolvedKey(storageKey) {
+	clearDeferredWrite(storageKey);
+	memoryFallback.delete(storageKey);
+}
+
+function persistEnvelope(storageKey, envelope) {
+	uni.setStorageSync(storageKey, envelope);
+	memoryFallback.delete(storageKey);
+	clearDeferredWrite(storageKey);
+}
+
+function scheduleDeferredWrite(storageKey, envelope, attempt = 0) {
+	const existing = deferredWrites.get(storageKey);
+	if (existing && existing.timer) {
+		clearTimeout(existing.timer);
+	}
+
+	const delay = RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)];
+	const timer = setTimeout(() => {
+		try {
+			persistEnvelope(storageKey, envelope);
+		} catch (error) {
+			if (isRetryableStorageError(error) && attempt + 1 < RETRY_DELAYS_MS.length) {
+				scheduleDeferredWrite(storageKey, envelope, attempt + 1);
+				return;
+			}
+			console.warn('[storage] deferred persist failed:', storageKey, error);
+			deferredWrites.delete(storageKey);
+		}
+	}, delay);
+
+	deferredWrites.set(storageKey, {
+		envelope,
+		attempt,
+		timer,
+	});
+}
+
+function rememberDeferredWrite(storageKey, envelope, error) {
+	memoryFallback.set(storageKey, envelope);
+	scheduleDeferredWrite(storageKey, envelope, 0);
+	console.warn('[storage] set deferred until runtime is writable:', storageKey, error);
+}
+
+export function flushDeferredStorageWrites() {
+	for (const [storageKey, entry] of deferredWrites.entries()) {
+		if (entry && entry.timer) {
+			clearTimeout(entry.timer);
+		}
+		try {
+			persistEnvelope(storageKey, entry.envelope);
+		} catch (error) {
+			if (isRetryableStorageError(error)) {
+				scheduleDeferredWrite(storageKey, entry.envelope, (entry.attempt || 0) + 1);
+				continue;
+			}
+			console.warn('[storage] flush deferred write failed:', storageKey, error);
+			deferredWrites.delete(storageKey);
+		}
+	}
+}
 
 const storage = {
-	/**
-	 * 读取值
-	 * @param {string} key
-	 * @param {*} defaultValue 不存在或已过期时返回的默认值
-	 * @returns {*}
-	 */
 	get(key, defaultValue = '') {
+		const storageKey = resolveKey(key);
 		try {
-			const raw = uni.getStorageSync(resolveKey(key));
-			if (raw === '' || raw === undefined || raw === null) return defaultValue;
-			const value = unwrap(raw);
-			if (value === undefined) {
-				// 过期了，顺手清理
+			const raw = uni.getStorageSync(storageKey);
+			if (raw !== '' && raw !== undefined && raw !== null) {
+				const value = unwrap(raw);
+				if (value !== undefined) {
+					return value;
+				}
 				this.remove(key);
 				return defaultValue;
 			}
-			return value;
 		} catch (_) {
+			// ignore and continue to memory fallback
+		}
+
+		const pending = memoryFallback.get(storageKey);
+		if (!pending) return defaultValue;
+		const value = unwrap(pending);
+		if (value === undefined) {
+			clearDeferredWriteByResolvedKey(storageKey);
 			return defaultValue;
 		}
+		return value;
 	},
 
-	/**
-	 * 写入值
-	 * @param {string} key
-	 * @param {*} value
-	 * @param {number} [ttlSeconds] 可选 TTL（秒），不传则永不过期
-	 */
 	set(key, value, ttlSeconds) {
+		const storageKey = resolveKey(key);
+		const envelope = wrap(value, ttlSeconds);
 		try {
-			uni.setStorageSync(resolveKey(key), wrap(value, ttlSeconds));
-		} catch (e) {
-			console.warn('[storage] set failed:', key, e);
+			persistEnvelope(storageKey, envelope);
+		} catch (error) {
+			if (isRetryableStorageError(error)) {
+				rememberDeferredWrite(storageKey, envelope, error);
+				return;
+			}
+			console.warn('[storage] set failed:', key, error);
 		}
 	},
 
-	/**
-	 * 删除值
-	 * @param {string} key
-	 */
 	remove(key) {
+		const storageKey = resolveKey(key);
+		clearDeferredWriteByResolvedKey(storageKey);
 		try {
-			uni.removeStorageSync(resolveKey(key));
+			uni.removeStorageSync(storageKey);
 		} catch (_) {
 			// ignore
 		}
 	},
 
-	/**
-	 * 检查 key 是否存在且未过期
-	 * @param {string} key
-	 * @returns {boolean}
-	 */
 	has(key) {
 		return this.get(key, undefined) !== undefined;
 	},
 
-	/**
-	 * 清理所有用户级缓存（退出登录时调用）
-	 */
 	clearUserScoped() {
 		try {
 			const info = uni.getStorageInfoSync();
 			const keys = Array.isArray(info.keys) ? info.keys : [];
 			keys.forEach((k) => {
 				if (!k) return;
-				// 匹配 fit_ 前缀的用户级 key
-				if (USER_PREFIXES.some(prefix => k.startsWith(prefix))) {
+				if (USER_PREFIXES.some((prefix) => k.startsWith(prefix))) {
+					clearDeferredWriteByResolvedKey(k);
 					uni.removeStorageSync(k);
 					return;
 				}
-				// 兼容三方库的 raw key
 				if (USER_RAW_KEYS.includes(k)) {
+					clearDeferredWriteByResolvedKey(k);
 					uni.removeStorageSync(k);
 				}
 			});
@@ -158,15 +206,13 @@ const storage = {
 		}
 	},
 
-	/**
-	 * 清理所有带 fit_ 前缀的存储
-	 */
 	clearAll() {
 		try {
 			const info = uni.getStorageInfoSync();
 			const keys = Array.isArray(info.keys) ? info.keys : [];
 			keys.forEach((k) => {
 				if (k && k.startsWith(PREFIX)) {
+					clearDeferredWriteByResolvedKey(k);
 					uni.removeStorageSync(k);
 				}
 			});

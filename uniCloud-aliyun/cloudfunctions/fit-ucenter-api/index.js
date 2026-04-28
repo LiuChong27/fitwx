@@ -1,6 +1,12 @@
 'use strict';
 const db = uniCloud.database();
 const dbCmd = db.command;
+const {
+	IMAGE_AUDIT_STATUS,
+	createImageAuditTraceId,
+	getUserMpWeixinOpenid,
+	submitImageAuditTask,
+} = require('fit-wechat-security');
 
 // ──────────────────────────────────────
 // 集合引用
@@ -20,6 +26,21 @@ const usersCol      = db.collection('uni-id-users');
 // ──────────────────────────────────────
 const success = (data, msg = 'success') => ({ code: 0, msg, data });
 const fail    = (msg, code = -1)        => ({ code, msg });
+
+function buildUnreadCountMap(members = [], source = {}) {
+	const map = { ...(source || {}) };
+	members.forEach(memberId => {
+		const current = Number(map[memberId] || 0);
+		map[memberId] = Number.isFinite(current) && current > 0 ? current : 0;
+	});
+	return map;
+}
+
+function getUnreadCountForUser(conversation = {}, uid) {
+	if (!uid) return 0;
+	const unreadMap = buildUnreadCountMap(conversation.members || [], conversation.unread_count_map || {});
+	return Number(unreadMap[uid] || 0);
+}
 
 /** 获取当月起止时间戳 */
 function getMonthRange() {
@@ -228,7 +249,7 @@ exports.main = async (event, context) => {
 				const logs = logsRes.data || [];
 				// 统计训练天数（按日去重）
 				const daySet = new Set();
-				let totalTimes = logs.length;
+				const totalTimes = logs.length;
 				let totalCalorie = 0;
 
 				logs.forEach(log => {
@@ -382,11 +403,6 @@ exports.main = async (event, context) => {
 					await coachSetCol.add({ uid, ...updateData, create_date: Date.now() });
 				}
 
-				// 同步教练身份到 profile
-				try {
-					await profilesCol.where({ uid }).update({ is_coach: true, update_date: Date.now() });
-				} catch (_) { /* ignore */ }
-
 				return success({ available, price, skillsText, intro });
 			}
 
@@ -496,6 +512,7 @@ exports.main = async (event, context) => {
 					last_message:      '',
 					last_sender_id:    '',
 					last_message_date: Date.now(),
+					unread_count_map:  { [uid]: 0, [targetUserId]: 0 },
 					create_date:       Date.now(),
 				});
 
@@ -517,8 +534,34 @@ exports.main = async (event, context) => {
 				if (!convRes.data || convRes.data.length === 0) return fail('会话不存在');
 				const conv = convRes.data[0];
 				if (!conv.members.includes(uid)) return fail('无权操作');
+				const targetUserId = (conv.members || []).find(memberId => memberId !== uid) || '';
+				const unreadMap = buildUnreadCountMap(conv.members || [], conv.unread_count_map || {});
+				if (targetUserId) {
+					unreadMap[targetUserId] = Number(unreadMap[targetUserId] || 0) + 1;
+				}
+				unreadMap[uid] = 0;
 
 				const now = Date.now();
+				let imageAuditData = {};
+				if (type === 'image') {
+					try {
+						const userRes = await usersCol.doc(uid).field({ wx_openid: 1, openid: 1 }).get();
+						const userInfo = userRes.data && userRes.data[0] || {};
+						const openid = getUserMpWeixinOpenid(userInfo);
+						if (!openid) return fail('图片审核暂不可用，请稍后重试');
+						const traceId = createImageAuditTraceId(`chat_${conversationId}`);
+						const audit = await submitImageAuditTask({ fileId: content, openid, traceId });
+						imageAuditData = {
+							image_audit_status: IMAGE_AUDIT_STATUS.PENDING,
+							image_audit_trace_id: audit.traceId || traceId,
+							image_audit_request_id: audit.requestId || '',
+							image_audit_requested_at: now,
+						};
+					} catch (error) {
+						console.warn('[fit-ucenter-api] chat image audit failed:', error);
+						return fail('图片审核暂不可用，请稍后重试');
+					}
+				}
 				const msgData = {
 					conversation_id: conversationId,
 					sender_id:       uid,
@@ -528,14 +571,17 @@ exports.main = async (event, context) => {
 					create_date:     now,
 					delivered_at:    now,
 					read_at:         null,
+					...imageAuditData,
 				};
-				await msgsCol.add(msgData);
+				const addRes = await msgsCol.add(msgData);
+				msgData._id = addRes.id;
 
 				// 更新会话摘要
 				await convsCol.doc(conversationId).update({
 					last_message:      msgData.content.slice(0, 100),
 					last_sender_id:    uid,
 					last_message_date: now,
+					unread_count_map:  unreadMap,
 				});
 
 				return success(msgData);
@@ -566,15 +612,63 @@ exports.main = async (event, context) => {
 					res = await query.orderBy('create_date', 'desc').skip(skip).limit(pageSize).get();
 				}
 
-				// 标记为已读，并写入 read_at
-				const now = Date.now();
-				await msgsCol.where({
-					conversation_id: conversationId,
-					sender_id: dbCmd.neq(uid),
-					read: false,
-				}).update({ read: true, read_at: now });
+				const currentConversation = convRes.data[0];
+				const shouldMarkRead = !!since || Number(page) <= 1;
+				const unreadCount = getUnreadCountForUser(currentConversation, uid);
+				if (shouldMarkRead && unreadCount > 0) {
+					const now = Date.now();
+					await msgsCol.where({
+						conversation_id: conversationId,
+						sender_id: dbCmd.neq(uid),
+						read: false,
+					}).update({ read: true, read_at: now });
+
+					const unreadMap = buildUnreadCountMap(currentConversation.members || [], currentConversation.unread_count_map || {});
+					unreadMap[uid] = 0;
+					await convsCol.doc(conversationId).update({ unread_count_map: unreadMap });
+				}
 
 				return success(res.data || []);
+			}
+
+			case 'getUnreadCount': {
+				if (!uid) return fail('请先登录');
+
+				const convRes = await convsCol.where({
+					members: dbCmd.elemMatch(dbCmd.eq(uid)),
+				}).field({ members: 1, unread_count_map: 1 }).limit(100).get();
+
+				const total = (convRes.data || []).reduce((sum, conv) => {
+					return sum + getUnreadCountForUser(conv, uid);
+				}, 0);
+
+				return success({ count: total });
+			}
+
+			case 'markAllConversationsRead': {
+				if (!uid) return fail('请先登录');
+
+				const convRes = await convsCol.where({
+					members: dbCmd.elemMatch(dbCmd.eq(uid)),
+				}).field({ _id: 1, members: 1, unread_count_map: 1 }).limit(100).get();
+
+				const conversations = convRes.data || [];
+				const now = Date.now();
+				let updated = 0;
+				for (const conv of conversations) {
+					const unreadMap = buildUnreadCountMap(conv.members || [], conv.unread_count_map || {});
+					if (Number(unreadMap[uid] || 0) <= 0) continue;
+					unreadMap[uid] = 0;
+					await convsCol.doc(conv._id).update({ unread_count_map: unreadMap });
+					await msgsCol.where({
+						conversation_id: conv._id,
+						sender_id: dbCmd.neq(uid),
+						read: false,
+					}).update({ read: true, read_at: now });
+					updated += 1;
+				}
+
+				return success({ updated, count: 0 });
 			}
 
 			/** 在线心跳与对端在线查询 */
@@ -610,33 +704,10 @@ exports.main = async (event, context) => {
 				const convs = convRes.data || [];
 				if (convs.length === 0) return success([]);
 
-				const convIds = convs.map(c => c._id);
 				const targetIds = [...new Set(convs
 					.map(c => (c.members || []).find(m => m !== uid))
 					.filter(Boolean)
 				)];
-
-				// 查询未读数
-				let unreadMap = {};
-				try {
-					const unreadRes = await msgsCol.aggregate()
-						.match({
-							conversation_id: dbCmd.in(convIds),
-							read: false,
-							sender_id: dbCmd.neq(uid),
-						})
-						.group({
-							_id: '$conversation_id',
-							count: dbCmd.sum(1),
-						})
-						.end();
-					unreadMap = (unreadRes.data || []).reduce((map, r) => {
-						map[r._id] = r.count;
-						return map;
-					}, {});
-				} catch (err) {
-					console.warn('[fit-ucenter] unread aggregate fail:', err.message);
-				}
 
 				// 查询用户信息
 				let userMap = {};
@@ -663,7 +734,7 @@ exports.main = async (event, context) => {
 						avatar,
 						lastMessage: conv.last_message || '',
 						lastMessageDate: conv.last_message_date || conv.create_date,
-						unread: unreadMap[conv._id] || 0,
+						unread: getUnreadCountForUser(conv, uid),
 					};
 				});
 

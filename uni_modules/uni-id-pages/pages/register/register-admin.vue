@@ -6,36 +6,37 @@
 				<image :src="logo"></image>
 			</view>
 			<!-- 顶部文字 -->
-			<text class="title title-box">创建超级管理员</text>
+			<text class="title title-box">{{ $t('login.page.register.admin.title') }}</text>
+			<text class="tip">{{ $t('login.page.register.admin.tip') }}</text>
 		</match-media>
 		<uni-forms ref="form" :value="formData" :rules="rules" validate-trigger="submit" err-show-type="toast">
 			<uni-forms-item name="username" required>
 				<uni-easyinput :inputBorder="false" :focus="focusUsername" @blur="focusUsername = false"
-					class="input-box" placeholder="请输入用户名" v-model="formData.username" trim="both" />
+					class="input-box" :placeholder="$t('login.page.register.common.usernamePlaceholder')" v-model="formData.username" trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="nickname">
-				<uni-easyinput :inputBorder="false" :focus="focusNickname" @blur="focusNickname = false" class="input-box" placeholder="请输入用户昵称" v-model="formData.nickname"
+				<uni-easyinput :inputBorder="false" :focus="focusNickname" @blur="focusNickname = false" class="input-box" :placeholder="$t('login.page.register.common.nicknamePlaceholder')" v-model="formData.nickname"
 					trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="password" v-model="formData.password" required>
 				<uni-easyinput :inputBorder="false" :focus="focusPassword" @blur="focusPassword = false"
-					class="input-box" maxlength="20" :placeholder="'请输入' + (config.passwordStrength == 'weak'?'6':'8') + '-16位密码'" type="password"
+					class="input-box" maxlength="20" :placeholder="$t('login.page.register.common.passwordPlaceholder', { min: config.passwordStrength == 'weak' ? '6' : '8' })" type="password"
 					v-model="formData.password" trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="password2" v-model="formData.password2" required>
 				<uni-easyinput :inputBorder="false" :focus="focusPassword2" @blur="focusPassword2 =false"
-					class="input-box" placeholder="再次输入密码" maxlength="20" type="password" v-model="formData.password2"
+					class="input-box" :placeholder="$t('login.page.register.common.passwordAgainPlaceholder')" maxlength="20" type="password" v-model="formData.password2"
 					trim="both" />
 			</uni-forms-item>
 <!--			<uni-forms-item>-->
 <!--				<uni-captcha ref="captcha" scene="register" v-model="formData.captcha" />-->
 <!--			</uni-forms-item>-->
 			<uni-id-pages-agreements scope="register" ref="agreements" ></uni-id-pages-agreements>
-			<button class="uni-btn" type="primary" @click="submit">注册</button>
-			<button @click="navigateBack" class="register-back">返回</button>
+			<button class="uni-btn" type="primary" @click="submit">{{ $t('login.page.register.admin.button') }}</button>
+			<button @click="navigateBack" class="register-back">{{ $t('login.page.register.common.back') }}</button>
 			<match-media :min-width="690">
 				<view class="link-box">
-					<text class="link" @click="toLogin">已有账号？点此登录</text>
+					<text class="link" @click="toLogin">{{ $t('login.page.register.common.toLogin') }}</text>
 				</view>
 			</match-media>
 		</uni-forms>
@@ -46,6 +47,7 @@
 	import rules from './validator.js';
 	import mixin from '@/uni_modules/uni-id-pages/common/login-page.mixin.js';
 	import config from '@/uni_modules/uni-id-pages/config.js'
+	import {showAuthFailure, showAuthToast} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 	const uniIdCo = uniCloud.importObject("uni-id-co", {customUI: true})
 	export default {
 		mixins: [mixin],
@@ -108,16 +110,11 @@
 			},
 			submitForm(params) {
 				uniIdCo.registerAdmin(this.formData).then(e => {
+					showAuthToast('register.admin.success')
 					uni.navigateBack()
 				})
 				.catch(e => {
-					//更好的体验：登录错误，直接刷新验证码
-					this.$refs.captcha.getImageCaptcha()
-					uni.showModal({
-						title: '提示',
-						content: e.errMsg || `创建失败: ${e.errCode}`,
-						showCancel: false
-					})
+					showAuthFailure((e && (e.message || e.errMsg)) || `创建失败: ${e.errCode}`)
 				})
 			},
 			navigateBack() {

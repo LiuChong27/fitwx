@@ -1,150 +1,153 @@
 import uniStarterConfig from '@/uni-starter.config.js';
-//应用初始化页
-// #ifdef APP
-import checkUpdate from '@/uni_modules/uni-upgrade-center-app/utils/check-update';
-import callCheckVersion from '@/uni_modules/uni-upgrade-center-app/utils/call-check-version';
 
-// 实现，路由拦截。当应用无访问摄像头/相册权限，引导跳到设置界面 https://ext.dcloud.net.cn/plugin?id=5095
-import interceptorChooseImage from '@/uni_modules/json-interceptor-chooseImage/js_sdk/main.js';
-interceptorChooseImage()
+const db = uniCloud.database();
+let hasWarnedUniIdUsersClientDbIssue = false;
 
-// #endif
-const db = uniCloud.database()
-export default async function() {
+function getCurrentRoute() {
+	try {
+		const pages = getCurrentPages();
+		const currentPage = pages[pages.length - 1];
+		return currentPage && currentPage.route ? currentPage.route : '';
+	} catch (_) {
+		return '';
+	}
+}
+
+function classifyClientDbError(code, message = '') {
+	const raw = `${code || ''} ${message || ''}`.toLowerCase();
+	if (
+		raw.includes('schema') &&
+		(raw.includes('missing') || raw.includes('not found') || raw.includes('collection schema') || raw.includes('schema error'))
+	) {
+		return 'schema_missing';
+	}
+	if (raw.includes('collection') && (raw.includes('not exist') || raw.includes('not found'))) {
+		return 'collection_missing';
+	}
+	if (raw.includes('permission') || raw.includes('auth') || raw.includes('forbidden') || raw.includes('denied')) {
+		return 'permission_denied';
+	}
+	if (raw.includes('token') && (raw.includes('invalid') || raw.includes('expired') || raw.includes('check-token-failed'))) {
+		return 'token_invalid';
+	}
+	return 'unknown';
+}
+
+function getFriendlyCloudErrorMessage(errorMessage = '') {
+	const msg = String(errorMessage || '').toLowerCase();
+	if (msg.includes('resource exhausted')) {
+		return '当前服务繁忙，请稍后重试。';
+	}
+	return '';
+}
+
+export default async function initApp() {
 	const debug = uniStarterConfig.debug;
 
-	// uniStarterConfig挂载到getApp().globalData.config
 	setTimeout(() => {
-		getApp({
-			allowDefault: true
-		}).globalData.config = uniStarterConfig;
-	}, 1)
+		getApp({ allowDefault: true }).globalData.config = uniStarterConfig;
+	}, 1);
 
-
-	// 初始化appVersion（仅app生效）
 	initAppVersion();
 
-	//clientDB的错误提示
-	function onDBError({
-		code, // 错误码详见https://uniapp.dcloud.net.cn/uniCloud/clientdb?id=returnvalue
-		message
-	}) {
-		// 仅保留 error 级别日志，避免生产环境信息泄漏
-		console.error('[clientDB]', code, message);
-	}
-	// 绑定clientDB错误事件
-	db.on('error', onDBError)
+	db.on('error', ({ code, message }) => {
+		const category = classifyClientDbError(code, message);
+		const payload = {
+			category,
+			code,
+			message,
+			route: getCurrentRoute(),
+		};
+		const rawMessage = String(message || '');
+		const isUniIdUsersSyncIssue =
+			rawMessage.includes('uni-id-users') &&
+			['schema_missing', 'collection_missing', 'permission_denied'].includes(category);
 
+		if (isUniIdUsersSyncIssue) {
+			if (!hasWarnedUniIdUsersClientDbIssue) {
+				console.warn('[clientDB] uni-id-users profile sync skipped; auth fallback remains active', payload);
+				hasWarnedUniIdUsersClientDbIssue = true;
+			}
+			return;
+		}
 
-	//拦截云对象请求
+		console.error('[clientDB]', payload);
+	});
+
 	uniCloud.interceptObject({
-		async invoke({
-			objectName, // 云对象名称
-			methodName, // 云对象的方法名称
-			params // 参数列表
-		}) {
-			// console.log('interceptObject',{
-			// 	objectName, // 云对象名称
-			// 	methodName, // 云对象的方法名称
-			// 	params // 参数列表
-			// });
-			if(objectName == "uni-id-co" && (methodName.includes('loginBy') ||  ['login','registerUser'].includes(methodName) )){
-				params[0].inviteCode = await new Promise((callBack) => {
+		async invoke({ objectName, methodName, params }) {
+			if (
+				objectName === 'uni-id-co' &&
+				(methodName.includes('loginBy') || ['login', 'registerUser'].includes(methodName))
+			) {
+				params[0].inviteCode = await new Promise((resolve) => {
 					uni.getClipboardData({
-						success: function(res) {
+						success(res) {
 							const clipData = (res.data || '').trim();
-							if (clipData.slice(0, 18) == 'uniInvitationCode:') {
-								let uniInvitationCode = clipData.slice(18, 38)
-								callBack(uniInvitationCode)
-							} else {
-								callBack()
+							if (clipData.slice(0, 18) === 'uniInvitationCode:') {
+								resolve(clipData.slice(18, 38));
+								return;
 							}
+							resolve();
 						},
 						fail() {
-							callBack()
+							resolve();
 						},
-						complete() {
-							// no-op
-						}
 					});
-				})
-				// console.log(params);
+				});
 			}
-			// console.log(params);
 		},
-		success(e) {
-			// 生产环境不输出云对象返回值，避免数据泄漏
-		},
-		complete() {
-
-		},
-		fail(e){
-			console.error(e);
-			const errMsg = (e && (e.message || e.errMsg)) || JSON.stringify(e);
-			if (errMsg.includes('resource exhausted') || errMsg.includes('资源耗尽')) {
+		fail(error) {
+			console.error(error);
+			const errMsg = (error && (error.message || error.errMsg)) || JSON.stringify(error);
+			const friendlyMessage = getFriendlyCloudErrorMessage(errMsg);
+			if (friendlyMessage) {
 				uni.showModal({
 					title: '服务繁忙',
-					content: '当前服务器资源紧张，请稍后再试。如持续出现请联系管理员升级云服务套餐。',
-					showCancel: false
+					content: friendlyMessage,
+					showCancel: false,
 				});
-			} else if (debug) {
+				return;
+			}
+			if (debug) {
 				uni.showModal({
 					content: errMsg,
-					showCancel: false
+					showCancel: false,
 				});
 			}
-		}
-	})
-
+		},
+	});
 
 	// #ifdef APP
-	// 监听并提示设备网络状态变化
-	uni.onNetworkStatusChange(res => {
-		if (res.networkType != 'none') {
+	uni.onNetworkStatusChange((res) => {
+		if (res.networkType !== 'none') {
 			uni.showToast({
-				title: '当前网络类型：' + res.networkType,
+				title: `网络已恢复：${res.networkType}`,
 				icon: 'none',
-				duration: 3000
-			})
+				duration: 3000,
+			});
 		} else {
 			uni.showToast({
-				title: '网络类型：' + res.networkType,
+				title: '网络已断开，请检查连接',
 				icon: 'none',
-				duration: 3000
-			})
+				duration: 3000,
+			});
 		}
 	});
 	// #endif
-
 }
-/**
- * // 初始化appVersion
- */
+
 function initAppVersion() {
 	// #ifdef APP-PLUS
-	let appid = plus.runtime.appid;
+	const appid = plus.runtime.appid;
 	plus.runtime.getProperty(appid, (wgtInfo) => {
-		let appVersion = plus.runtime;
-		let currentVersion = appVersion.versionCode > wgtInfo.versionCode ? appVersion : wgtInfo;
-		getApp({
-			allowDefault: true
-		}).appVersion = {
+		const appVersion = plus.runtime;
+		const currentVersion = appVersion.versionCode > wgtInfo.versionCode ? appVersion : wgtInfo;
+		getApp({ allowDefault: true }).appVersion = {
 			...currentVersion,
 			appid,
-			hasNew: false
-		}
-		// 检查更新小红点
-		callCheckVersion().then(res => {
-			// console.log('检查是否有可以更新的版本', res);
-			if (res.result.code > 0) {
-				// 有新版本
-				getApp({
-					allowDefault: true
-				}).appVersion.hasNew = true;
-				checkUpdate();
-			}
-		})
+			hasNew: false,
+		};
 	});
-	// 检查更新
 	// #endif
 }

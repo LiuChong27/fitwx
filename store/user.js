@@ -14,8 +14,8 @@
  *   userStore.logout();          // 退出清理
  */
 import { defineStore } from 'pinia';
-import { store as uniIdStore } from '@/uni_modules/uni-id-pages/common/store.js';
 import storage from '@/common/storage.js';
+import { getAuthSnapshot } from '@/common/auth.js';
 
 export const useUserStore = defineStore('user', {
 	state: () => ({
@@ -40,6 +40,10 @@ export const useUserStore = defineStore('user', {
 		hasLogin() {
 			return this.isLoggedIn && !!this.userId;
 		},
+		/** 是否已绑定手机号 */
+		hasMobile() {
+			return !!(this.profile && this.profile.mobile);
+		},
 		/** 用户信息摘要（供组件展示） */
 		userInfo() {
 			return {
@@ -57,30 +61,42 @@ export const useUserStore = defineStore('user', {
 		 */
 		syncFromLogin() {
 			try {
-				// 优先从 uni-id-pages store 读取
-				const info = uniIdStore.userInfo || {};
-				const cachedUser = uni.getStorageSync('uni-id-pages-userInfo') || {};
-				const merged = { ...cachedUser, ...info };
-
-				const uid = merged._id || '';
+				const snapshot = getAuthSnapshot();
+				const merged = snapshot.userInfo || {};
+				const uid = snapshot.userId || '';
 				const wxOpenid = merged.wx_openid || {};
-				const openid = wxOpenid['mp-weixin'] || merged.openid || '';
-				const token = uni.getStorageSync('uni_id_token') || uniIdStore.token || '';
+				const openid = wxOpenid['mp-weixin'] || wxOpenid.mp || merged.openid || '';
+				const token = snapshot.token || '';
 
 				this.userId = uid;
-				this.nickname = merged.nickname || '';
-				this.avatarUrl = merged.avatar_file?.url || merged.avatarUrl || '';
+				this.nickname = merged.nickname || merged.username || '';
+				this.avatarUrl = merged.avatar_file?.url || merged.avatarUrl || merged.avatar || '';
 				this.openid = openid;
 				this.token = token;
-				this.isLoggedIn = !!uid;
-				this.profile = merged;
+				this.isLoggedIn = !!snapshot.hasLogin;
+				this.profile = snapshot.hasLogin ? { ...merged, _id: uid } : null;
 
-				// 持久化到统一 Storage（不再写多个冗余 key）
+				if (!snapshot.hasLogin) {
+					this.userId = '';
+					this.nickname = '';
+					this.avatarUrl = '';
+					this.openid = '';
+					this.token = '';
+					this.isLoggedIn = false;
+					this.profile = null;
+					storage.remove('userId');
+					storage.remove('openid');
+					storage.remove('token');
+					storage.remove('userInfo');
+					storage.set('isLoggedIn', false);
+					return;
+				}
+
 				if (uid) storage.set('userId', uid);
 				if (openid) storage.set('openid', openid);
 				if (token) storage.set('token', token);
-				storage.set('isLoggedIn', !!uid);
-				storage.set('userInfo', merged);
+				storage.set('isLoggedIn', true);
+				storage.set('userInfo', this.profile);
 			} catch (e) {
 				console.warn('[userStore] syncFromLogin failed:', e);
 			}
@@ -91,20 +107,23 @@ export const useUserStore = defineStore('user', {
 		 */
 		restoreFromStorage() {
 			try {
-				const uid = storage.get('userId', '');
-				const openid = storage.get('openid', '');
-				const token = storage.get('token', '') || uni.getStorageSync('uni_id_token') || '';
-				const isLoggedIn = storage.get('isLoggedIn', false);
-				const userInfo = storage.get('userInfo', null);
-
-				this.userId = uid;
-				this.openid = openid;
-				this.token = token;
-				this.isLoggedIn = !!isLoggedIn;
-				if (userInfo) {
-					this.nickname = userInfo.nickname || '';
-					this.avatarUrl = userInfo.avatar_file?.url || userInfo.avatarUrl || '';
-					this.profile = userInfo;
+				const snapshot = getAuthSnapshot();
+				const snapshotUserInfo = snapshot.userInfo && Object.keys(snapshot.userInfo).length ? snapshot.userInfo : null;
+				const userInfo = snapshotUserInfo || storage.get('userInfo', null);
+				this.userId = snapshot.userId || storage.get('userId', '');
+				this.openid = userInfo?.openid || storage.get('openid', '');
+				this.token = snapshot.token || storage.get('token', '') || uni.getStorageSync('uni_id_token') || '';
+				this.isLoggedIn = !!snapshot.hasLogin;
+				if (userInfo && Object.keys(userInfo).length) {
+					this.nickname = userInfo.nickname || userInfo.username || '';
+					this.avatarUrl = userInfo.avatar_file?.url || userInfo.avatarUrl || userInfo.avatar || '';
+					this.profile = { ...userInfo, _id: this.userId || userInfo._id || '' };
+				} else if (!snapshot.hasLogin) {
+					this.openid = '';
+					this.token = '';
+					this.nickname = '';
+					this.avatarUrl = '';
+					this.profile = null;
 				}
 			} catch (e) {
 				console.warn('[userStore] restoreFromStorage failed:', e);

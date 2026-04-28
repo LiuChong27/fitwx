@@ -1,0 +1,15 @@
+{
+  "name": "fit-maintenance-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "运维云函数 - 管理员专用数据修复与重建脚本",
+  "cloudfunction-config": {
+    "memorySize": 512,
+    "timeout": 30,
+    "concurrency": 1
+  },
+  "dependencies": {
+    "uni-config-center": "file:../../../uni_modules/uni-config-center/uniCloud/cloudfunctions/common/uni-config-center",
+    "uni-id-common": "file:../../../uni_modules/uni-id-common/uniCloud/cloudfunctions/common/uni-id-common"
+  }
+}

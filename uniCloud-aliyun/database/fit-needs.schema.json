@@ -61,5 +61,21 @@
         "$env": "now"
       }
     }
-  }
+  },
+  "indexes": [
+    {
+      "name": "idx_sport_type_create_date",
+      "keyPath": {
+        "sport_type": 1,
+        "create_date": -1
+      }
+    },
+    {
+      "name": "idx_uid_create_date",
+      "keyPath": {
+        "uid": 1,
+        "create_date": -1
+      }
+    }
+  ]
 }

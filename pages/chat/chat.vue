@@ -131,9 +131,12 @@
 
 <script>
 	import chatService from '@/services/chatService.js';
-	import { store } from '@/uni_modules/uni-id-pages/common/store.js';
+	import { isLoggedIn, redirectToLogin } from '@/common/auth.js';
+	import networkResumeMixin from '@/common/networkResumeMixin.js';
+	import { validateImageFile } from '@/common/contentSecurity.js';
 
 	export default {
+		mixins: [networkResumeMixin],
 		data() {
 			return {
 				targetUser: {
@@ -164,6 +167,12 @@
 			};
 		},
 		onLoad(options) {
+			const returnTarget = this.buildReturnTarget(options);
+			if (!isLoggedIn()) {
+				redirectToLogin({ from: returnTarget });
+				return;
+			}
+
 			// 获取当前登录用户信息
 			this.initMyInfo();
 
@@ -210,19 +219,34 @@
 			this.stopPresenceHeartbeat();
 		},
 		methods: {
+			buildReturnTarget(options = {}) {
+				const query = Object.entries(options || {})
+					.filter(([key, value]) => key && value !== undefined && value !== null && value !== '')
+					.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+					.join('&');
+				return query ? `/pages/chat/chat?${query}` : '/pages/chat/chat';
+			},
+			onNetworkResume() {
+				if (!this.targetUser.userId) return;
+				if (!this.conversationId) {
+					this.initConversation();
+					return;
+				}
+				this.pollNewMessages();
+				this.pingOnline();
+			},
 			/** 获取当前登录用户信息 */
 			initMyInfo() {
 				try {
-					const userInfo = uniCloud.getCurrentUserInfo();
-					if (userInfo && userInfo.uid) {
-						this.myUserId = userInfo.uid;
-					}
-				} catch (e) {
-					console.warn('获取用户信息失败', e);
-				}
-				// 从 uni-id-pages 存储获取头像
-				try {
 					const stored = uni.getStorageSync('uni-id-pages-userInfo');
+					if (stored && stored._id) {
+						this.myUserId = stored._id;
+					} else {
+						const userInfo = uniCloud.getCurrentUserInfo();
+						if (userInfo && userInfo.uid) {
+							this.myUserId = userInfo.uid;
+						}
+					}
 					if (stored && stored.avatar_file && stored.avatar_file.url) {
 						this.myAvatar = stored.avatar_file.url;
 					}
@@ -418,7 +442,7 @@
 							exist.read_at = m.read_at;
 							exist.delivered_at = m.delivered_at;
 							exist.read = m.read;
-						} else if (m.sender_id !== this.myUserId) {
+						} else {
 							this.messages.push(m);
 						}
 					});
@@ -443,6 +467,11 @@
 					const maxSize = 5 * 1024 * 1024; // 5MB
 					if (size > maxSize) {
 						uni.showToast({ title: '图片过大，需小于5MB', icon: 'none' });
+						return;
+					}
+					const check = validateImageFile(filePath, size);
+					if (!check.valid) {
+						uni.showToast({ title: check.reason, icon: 'none' });
 						return;
 					}
 
@@ -566,12 +595,12 @@
 
 			showActions() {
 				uni.showActionSheet({
-					itemList: ['清空聊天记录', '举报'],
+					itemList: ['清空当前显示', '举报'],
 					success: (res) => {
 						if (res.tapIndex === 0) {
 							uni.showModal({
 								title: '提示',
-								content: '确定清空聊天记录？',
+								content: '仅清空当前页面显示，不会删除服务端聊天记录。确定继续？',
 								success: (r) => {
 									if (r.confirm) {
 										this.messages = [];
@@ -579,7 +608,11 @@
 								}
 							});
 						} else if (res.tapIndex === 1) {
-							uni.showToast({ title: '已收到举报', icon: 'none' });
+							const latest = [...this.messages].reverse().find(msg => msg.sender_id !== this.myUserId);
+							const targetContent = encodeURIComponent(String(latest?.content || '').slice(0, 120));
+							uni.navigateTo({
+								url: `/pages/report/create?targetType=chat_user&targetId=${encodeURIComponent(this.targetUser.userId)}&targetUserId=${encodeURIComponent(this.targetUser.userId)}&conversationId=${encodeURIComponent(this.conversationId)}&targetNickname=${encodeURIComponent(this.targetUser.nickname || '用户')}&targetContent=${targetContent}`,
+							});
 						}
 					}
 				});

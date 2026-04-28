@@ -4,7 +4,7 @@ const db = uniCloud.database();
 /**
  * 获取 Discover 列表（公共可见）
  */
-exports.main = async (event, context) => {
+exports.main = async (event, _context) => {
   try {
     const page = Math.max(1, Number(event.page) || 1);
     const pageSize = Math.max(1, Math.min(50, Number(event.pageSize) || 15));

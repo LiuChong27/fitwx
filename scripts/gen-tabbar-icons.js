@@ -152,8 +152,8 @@ class Canvas {
   fillRect(x1, y1, x2, y2, r, g, b, a = 255) {
     for (let y = Math.floor(y1) - 1; y <= Math.ceil(y2) + 1; y++) {
       for (let x = Math.floor(x1) - 1; x <= Math.ceil(x2) + 1; x++) {
-        let cx = Math.max(0, Math.min(1, Math.min(x + 1 - x1, x2 - x, 1)))
-        let cy = Math.max(0, Math.min(1, Math.min(y + 1 - y1, y2 - y, 1)))
+        const cx = Math.max(0, Math.min(1, Math.min(x + 1 - x1, x2 - x, 1)))
+        const cy = Math.max(0, Math.min(1, Math.min(y + 1 - y1, y2 - y, 1)))
         const coverage = cx * cy
         if (coverage > 0) this.blend(x, y, r, g, b, a * coverage)
       }
@@ -237,7 +237,6 @@ class Canvas {
 //  图标绘制函数  (纯填充风格, 适合小图标辨识)
 // ════════════════════════════════════════════════════════════
 const SIZE = 81
-const PI = Math.PI
 
 /**
  * Meet/约练 图标 — 双人轮廓

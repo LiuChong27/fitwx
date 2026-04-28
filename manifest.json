@@ -56,12 +56,13 @@
     },
     "quickapp" : {},
     "mp-weixin" : {
-        "appid" : "wx97d8bb89bc935861",
+        "appid" : "wxce1806469587913a",
         "setting" : {
             "urlCheck" : false,
             "minified" : true
         },
         "usingComponents" : true,
+        "lazyCodeLoading" : "requiredComponents",
         "optimization" : {
             "subPackages" : true
         },
@@ -71,6 +72,14 @@
                 "desc" : "你的位置信息将用于显示周边运动场所"
             }
         }
+    },
+    "mp-harmony" : {
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : false,
+            "minified" : true
+        },
+        "usingComponents" : true
     },
     "uniStatistics" : {
         "enable" : true

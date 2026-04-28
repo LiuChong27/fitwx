@@ -1,0 +1,52 @@
+[
+  {
+    "_id": "33e11be2-d4e6-4208-8d29-e935ffc201c2",
+    "scene": "all",
+    "mode": "block",
+    "word": "代开发票",
+    "match_mode": "contains",
+    "enabled": true,
+    "priority": 10,
+    "remark": "违法违规"
+  },
+  {
+    "_id": "fdb1e272-1cf1-4610-902b-1010922a50c8",
+    "scene": "all",
+    "mode": "block",
+    "word": "毒品",
+    "match_mode": "contains",
+    "enabled": true,
+    "priority": 10,
+    "remark": "违法违规"
+  },
+  {
+    "_id": "40070302-b422-41b5-93cd-7c4c7d972275",
+    "scene": "feed",
+    "mode": "review",
+    "word": "加微信",
+    "match_mode": "contains",
+    "enabled": true,
+    "priority": 50,
+    "remark": "疑似导流"
+  },
+  {
+    "_id": "ec83efa6-9bd6-4544-8cd4-aa52767b30bd",
+    "scene": "comment",
+    "mode": "review",
+    "word": "私聊转账",
+    "match_mode": "contains",
+    "enabled": true,
+    "priority": 50,
+    "remark": "疑似欺诈"
+  },
+  {
+    "_id": "6112eb1a-8d61-4200-a986-b6e039b5219f",
+    "scene": "invite",
+    "mode": "review",
+    "word": "刷单",
+    "match_mode": "contains",
+    "enabled": true,
+    "priority": 50,
+    "remark": "疑似营销"
+  }
+]

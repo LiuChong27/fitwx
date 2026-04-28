@@ -145,10 +145,160 @@ export default {
 	invite:{
 		download: "下载",
 	},
-	login:{
+	loginLegacy:{
 		phoneLogin: "登录后即可展示自己",
 		phoneLoginTip: "未注册的手机号验证通过后将自动注册",
 		getVerifyCode: "获取验证码",
+		page: {
+			brandKicker: '训练社区',
+			brandSlogan: '遇见更好的搭子',
+			loading: '登录中...',
+			success: '已登录',
+			loginFailedTitle: '登录遇到问题',
+			busyTitle: '服务繁忙',
+			busyContent: '数据库资源已达上限，请稍后再试或联系管理员升级云服务。',
+			whitelistBlockedContent: '当前是微信域名白名单拦截。请在微信公众平台-开发管理-服务器域名中补充该请求域名，并在开发者工具勾选“不校验合法域名”后重试。{debugInfo}',
+			whitelistDebugPrefix: '\n\n调试URL：{url}',
+			whitelistDebugFallback: '\n\n调试URL：未从报错中解析到，请查看控制台完整错误。若当前通过 HBuilderX 运行微信小程序，请确认 uniCloud 的 mp-weixin 启动方式为 remote，避免请求落到本地调试链路。',
+			weixinAuthorizeFailed: '微信授权失败，请在真机上重试或使用其他登录方式。',
+			genericRetry: '请稍后重试',
+			unsupportedCountry: '暂不支持其他国家',
+			withoutPwd: {
+				weixinPrimary: '微信授权并登录',
+				weixinSecondary: '仅使用微信基础授权',
+				weixinTip: '推荐使用微信手机号快速登录，未注册账号会自动创建',
+				quickLoginTip: '授权后即可继续匹配搭子、聊天和记录训练',
+				weixinMobileButton: '授权手机号并登录',
+				smsEntryTip: '输入手机号获取验证码，验证后即可继续',
+				smsEntryButton: '获取短信验证码',
+				phonePlaceholder: '请输入手机号',
+				invalidPhone: '请输入正确的手机号',
+				cancelPhoneAuth: '你已取消手机号授权',
+				missingPhoneAuth: '未获取到手机号授权，请重试',
+				missingWxCode: '未获取到登录凭证，请稍后重试'
+			},
+			pwd: {
+				title: '账号密码登录',
+				tip: '适合已注册账号，输入手机号、用户名或邮箱和密码即可继续。',
+				usernamePlaceholder: '请输入手机号/用户名/邮箱',
+				passwordPlaceholder: '请输入密码',
+				button: '登录并继续',
+				forgetHint: '忘记密码？',
+				retrieve: '找回密码',
+				register: '去注册',
+				adminRegister: '注册管理员账号',
+				passwordRequired: '请输入登录密码',
+				accountRequired: '请输入手机号、用户名或邮箱',
+				captchaRequired: '请输入验证码'
+			},
+			sms: {
+				title: '请输入验证码',
+				tip: '验证码已发送至 {phone}，输入后即可完成登录。',
+				button: '验证并登录',
+				codeRequired: '请输入6位验证码'
+			},
+			password: {
+				noPwd: '请输入密码',
+				noRePwd: '请再次输入密码',
+				rePwdErr: '两次输入密码不一致',
+				strength: {
+					super: '密码必须包含大小写字母、数字和特殊符号，且长度为 8-16 位',
+					strong: '密码必须包含字母、数字和特殊符号，且长度为 8-16 位',
+					medium: '密码必须由字母、数字和特殊符号中的任意两种组成，且长度为 8-16 位',
+					weak: '密码必须包含字母和数字，且长度为 6-16 位'
+				}
+			},
+			register: {
+				common: {
+					usernamePlaceholder: '请输入用户名',
+					nicknamePlaceholder: '请输入用户昵称',
+					passwordPlaceholder: '请输入 {min}-16 位密码',
+					passwordAgainPlaceholder: '请再次输入密码',
+					back: '返回',
+					toLogin: '已有账号，去登录'
+				},
+				username: {
+					title: '账号注册',
+					tip: '创建账号后即可继续匹配搭子、聊天和记录训练',
+					button: '注册并登录',
+					emailSwitch: '使用邮箱验证码注册'
+				},
+				email: {
+					title: '邮箱注册',
+					tip: '使用邮箱验证码完成注册，成功后即可登录',
+					emailPlaceholder: '请输入邮箱',
+					button: '完成注册',
+					usernameSwitch: '使用账号密码注册',
+					success: '注册成功，请登录'
+				},
+				admin: {
+					title: '创建超级管理员',
+					tip: '用于初始化管理账号，请妥善保管登录信息',
+					button: '创建管理员',
+					success: '管理员账号已创建'
+				},
+				rules: {
+					usernameRequired: '请输入用户名',
+					usernameLength: '用户名长度在 {minLength} 到 {maxLength} 个字符',
+					usernameNoPhoneOrEmail: '用户名不能是手机号或邮箱',
+					usernameNoNumber: '用户名不能为纯数字',
+					usernameNoChinese: '用户名不能包含中文',
+					usernameLabel: '用户名',
+					nicknameLength: '昵称长度在 {minLength} 到 {maxLength} 个字符',
+					nicknameNoPhoneOrEmail: '昵称不能是手机号或邮箱',
+					nicknameNoNumber: '昵称不能为纯数字',
+					nicknameNoChinese: '昵称不能包含中文',
+					nicknameLabel: '昵称',
+					emailRequired: '请输入邮箱',
+					emailInvalid: '邮箱格式不正确',
+					emailCodeRequired: '请输入邮箱验证码',
+					emailCodeInvalid: '请输入正确的邮箱验证码'
+				}
+			},
+			retrieve: {
+				common: {
+					newPasswordPlaceholder: '请输入新密码',
+					passwordAgainPlaceholder: '请再次输入新密码',
+					backLogin: '返回登录',
+					success: '密码已重置，请重新登录'
+				},
+				sms: {
+					title: '通过短信找回密码',
+					tip: '短信验证码验证通过后即可重置密码',
+					phonePlaceholder: '请输入手机号',
+					button: '重置密码',
+					emailSwitch: '通过邮箱验证码找回密码',
+					phoneRequired: '请输入手机号',
+					phoneInvalid: '手机号码格式不正确',
+					smsCodeRequired: '请输入短信验证码',
+					smsCodeInvalid: '请输入 6 位验证码',
+					passwordRequired: '请输入新密码',
+					passwordConfirmRequired: '请确认密码'
+				},
+				email: {
+					title: '通过邮箱找回密码',
+					tip: '邮箱验证码验证通过后即可重置密码',
+					emailPlaceholder: '请输入邮箱',
+					button: '重置密码',
+					smsSwitch: '通过手机验证码找回密码',
+					emailRequired: '请输入邮箱',
+					emailInvalid: '邮箱格式不正确',
+					emailCodeRequired: '请输入邮箱验证码',
+					emailCodeInvalid: '请输入 6 位验证码'
+				}
+			},
+			bindMobile: {
+				title: '绑定手机号',
+				tip: '绑定后可使用手机号登录，并解锁完整功能体验',
+				mobilePlaceholder: '请输入手机号',
+				button: '绑定并继续',
+				loading: '绑定中...',
+				success: '手机号已绑定',
+				phoneInvalid: '手机号码格式不正确',
+				codeInvalid: '请输入正确的验证码',
+				failed: '绑定失败，请稍后重试'
+			}
+		}
 	},
 	uniQuickLogin:{
 		accountLogin: "账号登录",
@@ -281,4 +431,373 @@ export default {
 		noNotification: '暂无通知',
 		markRead: '标记已读',
 	},
-}
+	state: {
+		sceneTags: {
+			default: '状态',
+			discover: '内容池',
+			meet: '匹配中',
+			coach: '教练池',
+			inbox: '消息盒',
+			chat: '新会话',
+			income: '记录簿',
+			members: '名单',
+			profile: '图片占位',
+			error: '异常态',
+		},
+		generic: {
+			emptyTitle: '暂时没有内容',
+			retry: '重新加载',
+			postFeed: '发布动态',
+			loginToPost: '登录后发布',
+			goMeet: '去约练看看',
+			mapPick: '地图选点',
+			uploadAvatar: '上传头像',
+		},
+		chat: {
+			empty: {
+				kicker: '新会话',
+				title: '先打个招呼',
+				description: '清楚地说明你的训练时间、地点和目标，更容易得到回应。',
+			},
+		},
+		notification: {
+			error: {
+				kicker: '消息同步',
+				title: '通知暂时没拉取到',
+			},
+			empty: {
+				kicker: '消息中心',
+				title: '还没有新的通知',
+				description: '申请、系统提醒和约练结果都会汇总在这里。',
+			},
+		},
+		discover: {
+			error: {
+				kicker: '动态同步',
+				title: '这次没有拉到最新动态',
+			},
+			empty: {
+				kicker: '内容筛选',
+				title: '还没有合适的内容',
+				description: '换一个筛选条件，或者先发布你的第一条训练动态。',
+			},
+			inviteTarget: {
+				kicker: '约练对象',
+				title: '还没有选中目标对象',
+				description: '请先从动态卡片中选择想发起约练的人。',
+			},
+			invitePlace: {
+				kicker: '地点状态',
+				title: '还没填写约练地点',
+				description: '建议填清楚场馆或地标，方便对方快速判断是否能参加。',
+			},
+			commentTarget: {
+				kicker: '评论对象',
+				title: '还没有选中要评论的动态',
+				description: '请先从动态卡片中选择一条内容再发表评论。',
+			},
+			commentInput: {
+				kicker: '评论提示',
+				title: '还没输入评论内容',
+				description: '一句具体回应，往往比泛泛点赞更容易打开对话。',
+			},
+			giftTarget: {
+				kicker: '道具对象',
+				title: '还没有选中要送道具的对象',
+				description: '请先从动态卡片中选择一位对象再继续。',
+			},
+			giftSelect: {
+				kicker: '道具选择',
+				title: '先选一个道具',
+				description: '选择一个免费道具后，再确认送出。',
+			},
+			detailTarget: {
+				kicker: '动态详情',
+				title: '还没有选中动态',
+				description: '请先从列表中选择一条动态，再查看完整内容。',
+			},
+			detailCover: {
+				kicker: '封面占位',
+				title: '这条动态还没上传封面',
+				description: '先看正文和互动信息，也可以直接发起约练。',
+			},
+			detailContent: {
+				kicker: '正文状态',
+				title: '这条动态还没补充正文',
+				description: '可以先看看标签和互动数据，或者直接开始私信。',
+			},
+			publishCover: {
+				kicker: '封面占位',
+				title: '添加封面图片',
+				description: '上传后动态卡片会更完整、更容易被看见。',
+			},
+		},
+		filter: {
+			empty: {
+				kicker: '筛选选项',
+				genderTitle: '暂无可选性别',
+				genderDesc: '筛选项准备好后会显示在这里。',
+				distanceTitle: '暂无可选距离',
+				distanceDesc: '距离选项准备好后会显示在这里。',
+				typeTitle: '暂无可选项目',
+				typeDesc: '项目类型准备好后会显示在这里。',
+				levelTitle: '暂无可选等级',
+				levelDesc: '训练等级准备好后会显示在这里。',
+			},
+		},
+		meet: {
+			needError: {
+				kicker: '约练同步',
+				title: '约练需求暂时没拉到',
+			},
+			needEmpty: {
+				kicker: '需求池',
+				title: '还没有匹配到约练需求',
+				description: '换个筛选条件，或者先发布你的训练计划。',
+			},
+			coachError: {
+				kicker: '教练同步',
+				title: '教练列表暂时没拉到',
+			},
+			coachEmpty: {
+				kicker: '推荐教练',
+				title: '暂时没有推荐教练',
+				description: '稍后再来，或者先去找搭子页发布你的目标。',
+			},
+			bookNoCoach: {
+				kicker: '预约状态',
+				title: '还没有选中教练',
+				description: '请先从教练列表选择一位教练，再填写预约信息。',
+			},
+			bookNoTag: {
+				kicker: '预约项目',
+				title: '这位教练暂时没有可预约项目',
+				description: '稍后再试，或者选择其他教练。',
+			},
+			inboxError: {
+				kicker: '私信同步',
+				title: '私信列表暂时没拉到',
+			},
+			inboxEmpty: {
+				kicker: '最近私信',
+				title: '还没有私信',
+				description: '去和附近的伙伴聊聊吧，新的会话会出现在这里。',
+			},
+			mapEmpty: {
+				kicker: '地图标记',
+				title: '暂无标记点',
+				description: '发布一条约练信息后，地图上的活动位置会显示在这里。',
+			},
+			publishLocation: {
+				kicker: '地点状态',
+				title: '还没有选择地点',
+				description: '建议先从地图选点，系统才能更准确地匹配附近的人。',
+			},
+			detailEmpty: {
+				kicker: '需求详情',
+				title: '暂时没有需求详情',
+				description: '请先从列表中选择一条约练需求。',
+			},
+			detailDescEmpty: {
+				kicker: '补充说明',
+				title: '对方还没填写更多说明',
+				description: '你可以先发起联系，确认训练目标和时间安排。',
+			},
+			coachListEmpty: {
+				kicker: '教练推荐',
+				title: '暂无推荐教练',
+				description: '稍后再试，或者先调整你的筛选偏好。',
+			},
+		},
+		profile: {
+			syncError: {
+				kicker: '资料同步',
+				title: '数据加载失败',
+				description: '稍等片刻再试一次，已缓存内容不会丢失。',
+			},
+			avatarEmpty: {
+				kicker: '头像状态',
+				title: '还没设置头像',
+				description: '上传头像后，聊天、约练和动态页会更容易被识别。',
+			},
+			incomeEmpty: {
+				kicker: '收入记录',
+				title: '暂无收入记录',
+				description: '完成约练、课程或打赏后，收入会自动汇总到这里。',
+			},
+			studentsEmpty: {
+				kicker: '学员名单',
+				title: '暂无学员',
+				description: '有新的约课或联系记录后，学员会显示在这里。',
+			},
+			coachSettingsEmpty: {
+				kicker: '资料完善',
+				title: '还没补充教练信息',
+				description: '填写擅长项目和经验介绍后，预约转化会更高。',
+			},
+		},
+		},
+		login: {
+			phoneLogin: '登录后即可展示自己',
+			phoneLoginTip: '未注册的手机号验证通过后将自动注册',
+			getVerifyCode: '获取验证码',
+			page: {
+				brandKicker: '训练社区',
+				brandSlogan: '遇见更好的搭子',
+				entrySlogan: '登录后即可使用动态、约练和私信功能。',
+				tabsLabel: '登录方式',
+				smsTab: '短信登录',
+				pwdTab: '密码登录',
+				loginAction: '登录',
+				loading: '登录中...',
+				success: '已登录',
+				loginFailedTitle: '登录遇到问题',
+				busyTitle: '服务繁忙',
+				busyContent: '数据库资源已达上限，请稍后再试或联系管理员升级云服务。',
+				whitelistBlockedContent: '当前请求被微信域名白名单拦截。请在微信公众平台 > 开发 > 服务器域名中补充对应域名，并在开发者工具勾选“不校验合法域名”后重试。{debugInfo}',
+				whitelistDebugPrefix: '\n\n调试 URL：{url}',
+				whitelistDebugFallback: '\n\n调试 URL：未从报错中解析到，请查看完整控制台日志。若当前通过 HBuilderX 运行微信小程序，请确认 uniCloud 的 mp-weixin 启动方式为 remote，避免请求落到本地调试链路。',
+				weixinAuthorizeFailed: '微信授权失败，请在真机上重试或改用其他登录方式。',
+				genericRetry: '请稍后重试',
+				unsupportedCountry: '暂不支持其他国家或地区',
+				withoutPwd: {
+					weixinPrimary: '微信一键登录',
+					weixinSecondary: '仅使用微信基础授权',
+					weixinTip: '推荐使用微信手机号快速登录，未注册账号会自动创建。',
+					weixinAuthTip: '默认仅使用微信基础授权登录；如需更完整体验，可继续授权手机号。',
+					quickLoginTip: '授权后即可继续匹配搭子、聊天和记录训练。',
+					weixinMobileButton: '使用微信手机号授权登录',
+					weixinPhoneAuthFailed: '微信手机号授权失败，请检查 uni-id 的 mp-weixin 配置（appid / appsecret / 服务空间）后重试。',
+					smsEntryTip: '输入手机号获取验证码，验证后即可继续。',
+					smsEntryButton: '获取短信验证码',
+					phonePlaceholder: '请输入手机号',
+					invalidPhone: '请输入正确的手机号',
+					cancelPhoneAuth: '你已取消手机号授权',
+					missingPhoneAuth: '未获取到手机号授权，请重试。',
+					missingWxCode: '未获取到微信登录凭证，请稍后重试。'
+				},
+				pwd: {
+					title: '账号密码登录',
+					tip: '适合已有账号，输入手机号、用户名或邮箱与密码即可继续。',
+					usernamePlaceholder: '请输入手机号 / 用户名 / 邮箱',
+					passwordPlaceholder: '请输入密码',
+					button: '登录并继续',
+					forgetHint: '忘记密码？',
+					retrieve: '找回密码',
+					register: '注册账号',
+					adminRegister: '注册管理员账号',
+					passwordRequired: '请输入登录密码',
+					accountRequired: '请输入手机号、用户名或邮箱',
+					captchaRequired: '请输入验证码',
+					imageCaptchaRequired: '请输入图形验证码'
+				},
+				sms: {
+					title: '请输入验证码',
+					tip: '验证码已发送至 {phone}，输入后即可完成登录。',
+					button: '验证并登录',
+					codeRequired: '请输入 6 位验证码'
+				},
+				password: {
+					noPwd: '请输入密码',
+					noRePwd: '请再次输入密码',
+					rePwdErr: '两次输入的密码不一致',
+					strength: {
+						super: '密码必须包含大小写字母、数字和特殊符号，长度为 8-16 位',
+						strong: '密码必须包含字母、数字和特殊符号，长度为 8-16 位',
+						medium: '密码需由字母、数字和特殊符号中的任意两种组成，长度为 8-16 位',
+						weak: '密码必须包含字母和数字，长度为 6-16 位'
+					}
+				},
+				register: {
+					common: {
+						usernamePlaceholder: '请输入用户名',
+						nicknamePlaceholder: '请输入昵称',
+						passwordPlaceholder: '请输入 {min}-16 位密码',
+						passwordAgainPlaceholder: '请再次输入密码',
+						back: '返回',
+						toLogin: '已有账号，去登录'
+					},
+					username: {
+						title: '账号注册',
+						tip: '创建账号后即可继续匹配搭子、聊天和记录训练。',
+						button: '注册并继续',
+						emailSwitch: '使用邮箱验证码注册'
+					},
+					email: {
+						title: '邮箱注册',
+						tip: '使用邮箱验证码完成注册，成功后即可登录。',
+						emailPlaceholder: '请输入邮箱',
+						button: '完成注册',
+						usernameSwitch: '使用账号密码注册',
+						success: '注册成功，请登录'
+					},
+					admin: {
+						title: '创建超级管理员',
+						tip: '用于初始化管理账号，请妥善保管登录信息。',
+						button: '创建管理员',
+						success: '管理员账号已创建'
+					},
+					rules: {
+						usernameRequired: '请输入用户名',
+						usernameLength: '用户名长度需在 {minLength} 到 {maxLength} 个字符之间',
+						usernameNoPhoneOrEmail: '用户名不能是手机号或邮箱',
+						usernameNoNumber: '用户名不能为纯数字',
+						usernameNoChinese: '用户名不能包含中文',
+						usernameLabel: '用户名',
+						nicknameLength: '昵称长度需在 {minLength} 到 {maxLength} 个字符之间',
+						nicknameNoPhoneOrEmail: '昵称不能是手机号或邮箱',
+						nicknameNoNumber: '昵称不能为纯数字',
+						nicknameNoChinese: '昵称不能包含中文',
+						nicknameLabel: '昵称',
+						emailRequired: '请输入邮箱',
+						emailInvalid: '请输入正确的邮箱地址',
+						emailCodeRequired: '请输入邮箱验证码',
+						emailCodeInvalid: '请输入正确的邮箱验证码'
+					}
+				},
+				retrieve: {
+					common: {
+						newPasswordPlaceholder: '请输入新密码',
+						passwordAgainPlaceholder: '请再次输入新密码',
+						backLogin: '返回登录',
+						success: '密码已重置，请重新登录'
+					},
+					sms: {
+						title: '通过短信找回密码',
+						tip: '短信验证码验证通过后即可重置密码。',
+						phonePlaceholder: '请输入手机号',
+						button: '重置密码',
+						emailSwitch: '通过邮箱验证码找回密码',
+						phoneRequired: '请输入手机号',
+						phoneInvalid: '手机号格式不正确',
+						smsCodeRequired: '请输入短信验证码',
+						smsCodeInvalid: '请输入 6 位验证码',
+						passwordRequired: '请输入新密码',
+						passwordConfirmRequired: '请确认密码'
+					},
+					email: {
+						title: '通过邮箱找回密码',
+						tip: '邮箱验证码验证通过后即可重置密码。',
+						emailPlaceholder: '请输入邮箱',
+						button: '重置密码',
+						smsSwitch: '通过手机验证码找回密码',
+						emailRequired: '请输入邮箱',
+						emailInvalid: '邮箱格式不正确',
+						emailCodeRequired: '请输入邮箱验证码',
+						emailCodeInvalid: '请输入 6 位验证码'
+					}
+				},
+				bindMobile: {
+					title: '绑定手机号',
+					tip: '绑定后可使用手机号登录，并解锁完整功能体验。',
+					mobilePlaceholder: '请输入手机号',
+					button: '绑定并继续',
+					loading: '绑定中...',
+					success: '手机号已绑定',
+					phoneInvalid: '手机号格式不正确',
+					codeInvalid: '请输入正确的验证码',
+					failed: '绑定失败，请稍后重试'
+				}
+			}
+		}
+	}

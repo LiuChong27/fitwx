@@ -1,7 +1,5 @@
 export default function(){
-	console.log(uni.getSystemInfoSync().platform)
-	let userprotocol = uni.getStorageSync('userprotocol');
-	console.log('userprotocol',userprotocol);
+	const userprotocol = uni.getStorageSync('userprotocol');
 	if(!userprotocol){
 		uni.navigateTo({
 			url:'/pages/uni-agree/uni-agree',

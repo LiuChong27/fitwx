@@ -10,14 +10,25 @@
                 <text class="marker-desc">{{ marker.extra?.address }}</text>
             </view>
         </view>
-        <view class="empty" v-else>
-            暂无标记点，发布一条信息试试~
-        </view>
+        <fit-state-panel
+            v-else
+            class="empty"
+            compact
+            scene="meet"
+            :kicker="$t('state.meet.mapEmpty.kicker')"
+            :title="$t('state.meet.mapEmpty.title')"
+            :description="$t('state.meet.mapEmpty.description')"
+        />
     </view>
 </template>
 
 <script>
+import FitStatePanel from '@/components/fit-state-panel.vue'
+
 export default {
+    components: {
+        FitStatePanel,
+    },
     props: {
         showOnlyMyMarkers: {
             type: Boolean,
@@ -92,8 +103,6 @@ export default {
     color: rgba(255, 255, 255, 0.5);
 }
 .empty {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.35);
-    padding: 24rpx 0;
+    padding-top: 8rpx;
 }
 </style>

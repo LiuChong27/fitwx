@@ -23,14 +23,25 @@
                 <button class="primary-btn" @click="$emit('accept', coach)">约他</button>
             </view>
         </view>
-        <view class="empty" v-if="!coaches.length">
-            暂无推荐教练，稍后再试～
-        </view>
+            <fit-state-panel
+                v-if="!coaches.length"
+                class="empty"
+                compact
+                scene="coach"
+                :kicker="$t('state.meet.coachListEmpty.kicker')"
+                :title="$t('state.meet.coachListEmpty.title')"
+                :description="$t('state.meet.coachListEmpty.description')"
+            />
     </view>
 </template>
 
 <script>
+    import FitStatePanel from '@/components/fit-state-panel.vue'
+
 export default {
+        components: {
+            FitStatePanel,
+        },
     data() {
         return {
             coaches: [
@@ -162,8 +173,6 @@ export default {
     font-size: 26rpx;
 }
 .empty {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.35);
-    padding: 32rpx 0;
+    padding-top: 12rpx;
 }
 </style>

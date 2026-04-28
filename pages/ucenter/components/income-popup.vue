@@ -27,16 +27,26 @@
           <text class="income-amount">+¥{{ r.amount }}</text>
         </view>
       </view>
-      <view v-else class="empty-tip">
-        <text class="empty-text">暂无收入记录</text>
-      </view>
+      <fit-state-panel
+        v-else
+        compact
+        scene="income"
+        :kicker="$t('state.profile.incomeEmpty.kicker')"
+        :title="$t('state.profile.incomeEmpty.title')"
+        :description="$t('state.profile.incomeEmpty.description')"
+      />
     </view>
   </uni-popup>
 </template>
 
 <script>
+  import FitStatePanel from '@/components/fit-state-panel.vue'
+
 export default {
   name: 'IncomePopup',
+    components: {
+      FitStatePanel,
+    },
   props: {
     summary: { type: Object, default: () => ({ month: 0, total: 0 }) },
     records: { type: Array, default: () => [] },
@@ -127,14 +137,5 @@ export default {
   font-size: 32rpx;
   font-weight: 600;
   color: #4caf50;
-}
-.empty-tip {
-  @include sl-card;
-  padding: 40rpx;
-  text-align: center;
-}
-.empty-text {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.45);
 }
 </style>

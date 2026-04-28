@@ -101,6 +101,99 @@
       "description": "状态: 0=待审核, 1=正常, 2=已删除",
       "defaultValue": 1
     },
+    "moderation_status": {
+      "bsonType": "string",
+      "description": "内容安全状态: pass/review/block",
+      "enum": ["pass", "review", "block"],
+      "defaultValue": "pass"
+    },
+    "moderation_reason": {
+      "bsonType": "string",
+      "description": "命中规则原因",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "moderation_updated_at": {
+      "bsonType": "number",
+      "description": "内容安全检查时间戳(ms)"
+    },
+    "text_moderation_status": {
+      "bsonType": "string",
+      "description": "文本内容安全状态: pass/review/block",
+      "enum": ["pass", "review", "block"],
+      "defaultValue": "pass"
+    },
+    "text_moderation_reason": {
+      "bsonType": "string",
+      "description": "文本审核原因",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "image_moderation_status": {
+      "bsonType": "string",
+      "description": "图片内容安全状态: none/pending/pass/review/block/error",
+      "enum": ["none", "pending", "pass", "review", "block", "error"],
+      "defaultValue": "none"
+    },
+    "image_moderation_reason": {
+      "bsonType": "string",
+      "description": "图片审核原因",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "image_audit_trace_id": {
+      "bsonType": "string",
+      "description": "微信异步图片审核 trace_id",
+      "maxLength": 80,
+      "trim": "both"
+    },
+    "image_audit_request_id": {
+      "bsonType": "string",
+      "description": "微信异步图片审核 request_id",
+      "maxLength": 80,
+      "trim": "both"
+    },
+    "image_audit_requested_at": {
+      "bsonType": "number",
+      "description": "图片审核任务提交时间戳(ms)"
+    },
+    "image_audit_callback_at": {
+      "bsonType": "number",
+      "description": "图片审核回调处理时间戳(ms)"
+    },
+    "image_audit_media_url": {
+      "bsonType": "string",
+      "description": "提交审核时解析出的图片URL",
+      "maxLength": 500,
+      "trim": "both"
+    },
+    "image_audit_err_code": {
+      "bsonType": "int",
+      "description": "微信图片审核错误码",
+      "defaultValue": 0
+    },
+    "image_audit_err_msg": {
+      "bsonType": "string",
+      "description": "微信图片审核错误信息",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "image_audit_suggest": {
+      "bsonType": "string",
+      "description": "微信图片审核建议字段 suggest",
+      "maxLength": 40,
+      "trim": "both"
+    },
+    "image_audit_label": {
+      "bsonType": "string",
+      "description": "微信图片审核标签 label",
+      "maxLength": 40,
+      "trim": "both"
+    },
+    "image_audit_raw": {
+      "bsonType": "object",
+      "description": "微信图片审核原始回调内容"
+    },
     "create_date": {
       "bsonType": "timestamp",
       "description": "创建时间",
@@ -112,5 +205,50 @@
       "bsonType": "timestamp",
       "description": "更新时间"
     }
-  }
+  },
+  "indexes": [
+    {
+      "name": "idx_status_create_date",
+      "keyPath": {
+        "status": 1,
+        "create_date": -1
+      }
+    },
+    {
+      "name": "idx_user_id_create_date",
+      "keyPath": {
+        "user_id": 1,
+        "create_date": -1
+      }
+    },
+    {
+      "name": "idx_status_type_level_create_date",
+      "keyPath": {
+        "status": 1,
+        "type": 1,
+        "level": 1,
+        "create_date": -1
+      }
+    },
+    {
+      "name": "idx_moderation_status_create_date",
+      "keyPath": {
+        "moderation_status": 1,
+        "create_date": -1
+      }
+    },
+    {
+      "name": "idx_image_audit_trace_id",
+      "keyPath": {
+        "image_audit_trace_id": 1
+      }
+    },
+    {
+      "name": "idx_image_moderation_status_create_date",
+      "keyPath": {
+        "image_moderation_status": 1,
+        "create_date": -1
+      }
+    }
+  ]
 }

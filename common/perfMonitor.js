@@ -77,7 +77,7 @@ class PerfMonitor {
   getMemoryUsage() {
     // #ifdef APP-PLUS
     try {
-      const info = plus.runtime.getProperty(plus.runtime.appid, () => {})
+      plus.runtime.getProperty(plus.runtime.appid, () => {})
       // plus.memory 并非标准 API，使用 performance 兜底
     } catch (_) { /* ignore */ }
     // #endif

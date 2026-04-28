@@ -6,25 +6,26 @@
 				<image :src="logo"></image>
 			</view>
 			<!-- 顶部文字 -->
-			<text class="title title-box">邮箱验证码注册</text>
+			<text class="title title-box">{{ $t('login.page.register.email.title') }}</text>
+			<text class="tip">{{ $t('login.page.register.email.tip') }}</text>
 		</match-media>
 		<uni-forms ref="form" :value="formData" :rules="rules" validate-trigger="submit" err-show-type="toast">
 			<uni-forms-item name="email" required>
 				<uni-easyinput :inputBorder="false" :focus="focusEmail" @blur="focusEmail = false"
-					class="input-box" placeholder="请输入邮箱" v-model="formData.email" trim="both" />
+					class="input-box" :placeholder="$t('login.page.register.email.emailPlaceholder')" v-model="formData.email" trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="nickname">
-				<uni-easyinput :inputBorder="false" :focus="focusNickname" @blur="focusNickname = false" class="input-box" placeholder="请输入用户昵称" 
+				<uni-easyinput :inputBorder="false" :focus="focusNickname" @blur="focusNickname = false" class="input-box" :placeholder="$t('login.page.register.common.nicknamePlaceholder')" 
 				v-model="formData.nickname" trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="password" v-model="formData.password" required>
 				<uni-easyinput :inputBorder="false" :focus="focusPassword" @blur="focusPassword = false"
-					class="input-box" maxlength="20" :placeholder="'请输入' + (config.passwordStrength == 'weak'?'6':'8') + '-16位密码'" type="password"
+					class="input-box" maxlength="20" :placeholder="$t('login.page.register.common.passwordPlaceholder', { min: config.passwordStrength == 'weak' ? '6' : '8' })" type="password"
 					v-model="formData.password" trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="password2" v-model="formData.password2" required>
 				<uni-easyinput :inputBorder="false" :focus="focusPassword2" @blur="focusPassword2 =false"
-					class="input-box" placeholder="再次输入密码" maxlength="20" type="password" v-model="formData.password2"
+					class="input-box" :placeholder="$t('login.page.register.common.passwordAgainPlaceholder')" maxlength="20" type="password" v-model="formData.password2"
 					trim="both" />
 			</uni-forms-item>
 			<uni-forms-item name="code" >
@@ -32,12 +33,12 @@
 				</uni-id-pages-email-form>
 			</uni-forms-item>
 			<uni-id-pages-agreements scope="register" ref="agreements" ></uni-id-pages-agreements>
-			<button class="uni-btn" type="primary" @click="submit">注册</button>
-			<button @click="navigateBack" class="register-back">返回</button>
+			<button class="uni-btn" type="primary" @click="submit">{{ $t('login.page.register.email.button') }}</button>
+			<button @click="navigateBack" class="register-back">{{ $t('login.page.register.common.back') }}</button>
 			<match-media :min-width="690">
 				<view class="link-box">
-					<text class="link" @click="registerByUserName">用户名密码注册</text>
-					<text class="link" @click="toLogin">已有账号？点此登录</text>
+					<text class="link" @click="registerByUserName">{{ $t('login.page.register.email.usernameSwitch') }}</text>
+					<text class="link" @click="toLogin">{{ $t('login.page.register.common.toLogin') }}</text>
 				</view>
 			</match-media>
 		</uni-forms>
@@ -48,8 +49,9 @@
 	import rules from './validator.js';
 	import mixin from '@/uni_modules/uni-id-pages/common/login-page.mixin.js';
 	import config from '@/uni_modules/uni-id-pages/config.js'
-	import passwordMod from '@/uni_modules/uni-id-pages/common/password.js'
-	const uniIdCo = uniCloud.importObject("uni-id-co")
+	import passwordMod from '@/uni_modules/uni-id-pages/pages/common/password.js'
+	import {authText, showAuthFailure, showAuthToast} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
+	const uniIdCo = uniCloud.importObject("uni-id-co", {customUI: true})
 	export default {
 		mixins: [mixin],
 		data() {
@@ -65,10 +67,10 @@
 					email: {
 						rules: [{
 								required: true,
-								errorMessage: '请输入邮箱',
+								errorMessage: authText('register.rules.emailRequired'),
 							},{
 								format:'email',
-								errorMessage: '邮箱格式不正确',
+								errorMessage: authText('register.rules.emailInvalid'),
 							}
 						]
 					},
@@ -76,35 +78,35 @@
 						rules: [{
 								minLength: 3,
 								maxLength: 32,
-								errorMessage: '昵称长度在 {minLength} 到 {maxLength} 个字符',
+								errorMessage: authText('register.rules.nicknameLength'),
 							},
 							{
 								validateFunction: function(rule, value, data, callback) {
 									// console.log(value);
 									if (/^1\d{10}$/.test(value) || /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/.test(value)) {
-										callback('昵称不能是：手机号或邮箱')
+										callback(authText('register.rules.nicknameNoPhoneOrEmail'))
 									};
 									if (/^\d+$/.test(value)) {
-										callback('昵称不能为纯数字')
+										callback(authText('register.rules.nicknameNoNumber'))
 									};
 									if(/[\u4E00-\u9FA5\uF900-\uFA2D]{1,}/.test(value)){
-										callback('昵称不能包含中文')
+										callback(authText('register.rules.nicknameNoChinese'))
 									}
 									return true
 								}
 							}
 						],
-						label: "昵称"
+						label: authText('register.rules.nicknameLabel')
 					},
 					...passwordMod.getPwdRules(),
 					code: {
 						rules: [{
 								required: true,
-								errorMessage: '请输入邮箱验证码',
+								errorMessage: authText('register.rules.emailCodeRequired'),
 							},
 							{
 								pattern: /^.{6}$/,
-								errorMessage: '邮箱验证码不正确',
+								errorMessage: authText('register.rules.emailCodeInvalid'),
 							}
 						]
 					}
@@ -150,17 +152,13 @@
 			},
 			submitForm(params) {
 				uniIdCo.registerUserByEmail(this.formData).then(e => {
-					// console.log(e);
-					uni.navigateTo({
-						url: '/pages/login/login-withpwd',
-						complete: (e) => {
-							// console.log(e);
-						}
+					showAuthToast('register.email.success')
+					uni.redirectTo({
+						url: '/pages/login/login-withpwd'
 					})
 				})
 				.catch(e => {
-					// console.log(e);
-					console.log(e.message);
+					showAuthFailure((e && (e.message || e.errMsg)) || '')
 				})
 			},
 			navigateBack() {

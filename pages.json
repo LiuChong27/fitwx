@@ -1,47 +1,46 @@
 {
-	"pages": [{
-			"path": "pages/login/login-withoutpwd",
+	"pages": [
+		{
+			"path": "pages/meet/meet",
 			"style": {
 				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white",
-				"navigationBarBackgroundColor": "#0A1628",
-				"backgroundColor": "#0A1628"
+				"enablePullDownRefresh": true
 			}
-		}, {
+		},
+		{
 			"path": "pages/grid/discover",
 			"style": {
 				//#ifndef MP
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
 				//#endif
+				"enablePullDownRefresh": true
 			}
-		}, {
-			"path": "pages/meet/meet",
-			"style": {
-				"navigationStyle": "custom"
-			}
-		}, {
+		},
+		{
 			"path": "pages/ucenter/ucenter",
 			"style": {
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
 			}
-		}, {
+		},
+		{
 			"path": "pages/notification/index",
 			"style": {
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": false
 			}
-		}, {
+		},
+		{
 			"path": "pages/chat/chat",
 			"style": {
-				"navigationBarTitleText": "聊天",
+				"navigationBarTitleText": "Chat",
 				"enablePullDownRefresh": false
 			}
 		},
 		{
 			"path": "pages/profile/profile",
 			"style": {
-				"navigationBarTitleText": "主页",
+				"navigationBarTitleText": "Profile",
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": false
 			}
@@ -54,152 +53,167 @@
 					"popGesture": "none"
 				}
 			}
-		}, {
+		},
+		{
 			"path": "pages/ucenter/settings/settings",
 			"style": {
-				"navigationBarTitleText": "设置"
+				"navigationBarTitleText": "Settings"
 			}
 		},
 		{
 			"path": "pages/ucenter/read-news-log/read-news-log",
 			"style": {
-				"navigationBarTitleText": "阅读记录",
+				"navigationBarTitleText": "Read Log",
 				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/admin/index",
+			"style": {
+				"navigationBarTitleText": "Admin"
+			}
+		},
+		{
+			"path": "pages/admin/report-review",
+			"style": {
+				"navigationBarTitleText": "Report Review",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/admin/feed-review",
+			"style": {
+				"navigationBarTitleText": "Feed Review",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/report/create",
+			"style": {
+				"navigationBarTitleText": "Create Report"
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "white",
+				"navigationBarBackgroundColor": "#08131D",
+				"backgroundColor": "#08131D"
+			}
+		},
+		{
+			"path": "pages/login/login-withoutpwd",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "white",
+				"navigationBarBackgroundColor": "#08131D",
+				"backgroundColor": "#08131D"
 			}
 		},
 		{
 			"path": "pages/login/login-withpwd",
 			"style": {
-				"navigationBarTitleText": "账号登录",
+				"navigationBarTitleText": "Password Login",
 				"navigationBarTextStyle": "white",
-				"navigationBarBackgroundColor": "#0A1628",
-				"backgroundColor": "#0A1628"
+				"navigationBarBackgroundColor": "#08131D",
+				"backgroundColor": "#08131D"
 			}
 		},
 		{
 			"path": "pages/login/login-smscode",
 			"style": {
-				"navigationBarTitleText": "手机验证码登录",
+				"navigationBarTitleText": "SMS Login",
 				"navigationBarTextStyle": "white",
-				"navigationBarBackgroundColor": "#0A1628",
-				"backgroundColor": "#0A1628"
+				"navigationBarBackgroundColor": "#08131D",
+				"backgroundColor": "#08131D"
 			}
 		}
-		// #ifdef APP
-		, {
-			"path": "pages/ucenter/about/about",
-			"style": {
-				"navigationBarTitleText": "关于",
-				"app-plus": {
-					"titleNView": {
-						"buttons": [{
-							"type": "share"
-						}]
+	],
+	"subPackages": [
+		{
+			"root": "uni_modules/uni-feedback",
+			"pages": [
+				{
+					"path": "pages/opendb-feedback/opendb-feedback",
+					"style": {
+						"navigationBarTitleText": "Feedback",
+						"enablePullDownRefresh": false
 					}
 				}
-			}
-		},
-		{
-			"path": "uni_modules/uni-upgrade-center-app/pages/upgrade-popup",
-			"style": {
-				"disableScroll": true,
-				"app-plus": {
-					"backgroundColorTop": "transparent",
-					"background": "transparent",
-					"titleNView": false,
-					"scrollIndicator": false,
-					"popGesture": "none",
-					"animationType": "fade-in",
-					"animationDuration": 200
-
-				}
-			}
-		},
-		{
-			"path": "pages/ucenter/invite/invite",
-			"style": {
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": false
-			}
-		}
-		// #endif
-	],
-	"subPackages": [{
-			"root": "uni_modules/uni-feedback",
-			"pages": [{
-				"path": "pages/opendb-feedback/opendb-feedback",
-				"style": {
-					"navigationBarTitleText": "意见反馈",
-					"enablePullDownRefresh": false
-				}
-			}]
+			]
 		},
 		{
 			"root": "uni_modules/uni-id-pages/pages",
-			"pages": [{
+			"pages": [
+				{
 					"path": "userinfo/userinfo",
 					"style": {
-						"navigationBarTitleText": "个人资料"
+						"navigationBarTitleText": "User Info"
 					}
 				},
 				{
 					"path": "userinfo/realname-verify/realname-verify",
 					"style": {
 						"enablePullDownRefresh": false,
-						"navigationBarTitleText": "实名认证"
+						"navigationBarTitleText": "Realname Verify"
 					}
 				},
 				{
 					"path": "userinfo/deactivate/deactivate",
 					"style": {
-						"navigationBarTitleText": "注销账号"
+						"navigationBarTitleText": "Deactivate"
 					}
 				},
 				{
 					"path": "userinfo/bind-mobile/bind-mobile",
 					"style": {
-						"navigationBarTitleText": "绑定手机号码"
+						"navigationBarTitleText": "Bind Mobile"
 					}
 				},
 				{
 					"path": "register/register",
 					"style": {
-						"navigationBarTitleText": "注册"
+						"navigationBarTitleText": "Register"
 					}
 				},
 				{
 					"path": "retrieve/retrieve",
 					"style": {
-						"navigationBarTitleText": "重置密码"
+						"navigationBarTitleText": "Reset Password"
 					}
-				}, {
+				},
+				{
 					"path": "common/webview/webview",
 					"style": {
 						"enablePullDownRefresh": false,
 						"navigationBarTitleText": ""
 					}
-				}, {
+				},
+				{
 					"path": "userinfo/change_pwd/change_pwd",
 					"style": {
 						"enablePullDownRefresh": false,
-						"navigationBarTitleText": "修改密码"
+						"navigationBarTitleText": "Change Password"
 					}
-				}, {
+				},
+				{
 					"path": "register/register-by-email",
 					"style": {
-						"navigationBarTitleText": "邮箱验证码注册"
+						"navigationBarTitleText": "Register By Email"
 					}
-				}, {
+				},
+				{
 					"path": "retrieve/retrieve-by-email",
 					"style": {
-						"navigationBarTitleText": "通过邮箱重置密码"
+						"navigationBarTitleText": "Reset By Email"
 					}
 				},
 				{
 					"path": "userinfo/set-pwd/set-pwd",
 					"style": {
 						"enablePullDownRefresh": false,
-						"navigationBarTitleText": "设置密码"
+						"navigationBarTitleText": "Set Password"
 					}
 				}
 				// #ifdef H5
@@ -211,13 +225,17 @@
 					"path": "register/register-admin",
 					"style": {
 						"enablePullDownRefresh": false,
-						"navigationBarTitleText": "注册管理员账号"
+						"navigationBarTitleText": "Register Admin"
 					}
 				}
 				// #endif
 			]
 		}
 	],
+	"easycom": {
+		"autoscan": true,
+		"custom": {}
+	},
 	"globalStyle": {
 		// #ifdef H5
 		"h5": {
@@ -226,13 +244,11 @@
 		// #endif
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "FIT",
-		"navigationBarBackgroundColor": "#0A1628",
-		"backgroundColor": "#0A1628",
+		"navigationBarBackgroundColor": "#08131D",
+		"backgroundColor": "#08131D",
 		"enablePullDownRefresh": false,
-		// "maxWidth":375,
 		"rpxCalcMaxDeviceWidth": 375,
 		"rpxCalcBaseDeviceWidth": 375
-		// "rpxCalcIncludeWidth":0
 	},
 	"condition": {
 		"list": [
@@ -243,43 +259,45 @@
 		"current": 1
 	},
 	"tabBar": {
-		"color": "rgba(255,255,255,0.4)",
-		"selectedColor": "#00E5FF",
+		"color": "rgba(255,255,255,0.45)",
+		"selectedColor": "#72E4C8",
 		"borderStyle": "black",
-		"backgroundColor": "#0A1628",
-		"list": [{
-			"pagePath": "pages/meet/meet",
-			"iconPath": "static/tabbar/list.png",
-			"selectedIconPath": "static/tabbar/list_active.png",
-			"text": "Meet"
-		}, {
-			"pagePath": "pages/grid/discover",
-			"iconPath": "static/tabbar/grid.png",
-			"selectedIconPath": "static/tabbar/grid_active.png",
-			"text": "Discover"
-		}, {
-			"pagePath": "pages/notification/index",
-			"iconPath": "static/tabbar/notice.png",
-			"selectedIconPath": "static/tabbar/notice_active.png",
-			"text": "Message"
-		}, {
-			"pagePath": "pages/ucenter/ucenter",
-			"iconPath": "static/tabbar/me.png",
-			"selectedIconPath": "static/tabbar/me_active.png",
-			"text": "UCenter"
-		}]
+		"backgroundColor": "#08131D",
+		"list": [
+			{
+				"pagePath": "pages/meet/meet",
+				"iconPath": "static/tabbar/list.png",
+				"selectedIconPath": "static/tabbar/list_active.png",
+				"text": "Meet"
+			},
+			{
+				"pagePath": "pages/grid/discover",
+				"iconPath": "static/tabbar/grid.png",
+				"selectedIconPath": "static/tabbar/grid_active.png",
+				"text": "笔记"
+			},
+			{
+				"pagePath": "pages/notification/index",
+				"iconPath": "static/tabbar/notice.png",
+				"selectedIconPath": "static/tabbar/notice_active.png",
+				"text": "Notice"
+			},
+			{
+				"pagePath": "pages/ucenter/ucenter",
+				"iconPath": "static/tabbar/me.png",
+				"selectedIconPath": "static/tabbar/me_active.png",
+				"text": "Me"
+			}
+		]
 	},
 	"uniIdRouter": {
-		"loginPage": "pages/login/login-withoutpwd",
+		"loginPage": "pages/login/login",
 		"needLogin": [
 			"/uni_modules/uni-id-pages/pages/userinfo/userinfo",
 			"/pages/chat/chat",
 			"/pages/profile/profile",
-			"/pages/ucenter/ucenter",
 			"/pages/ucenter/settings/settings",
-			"/pages/ucenter/invite/invite",
 			"/pages/ucenter/read-news-log/read-news-log",
-			"/pages/ucenter/about/about",
 			"/pages/notification/index"
 		],
 		"resToLogin": true

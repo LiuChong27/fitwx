@@ -3,7 +3,6 @@ const db = uniCloud.database()
 const dbCmd = db.command
 
 const notificationsCol = db.collection('fit-notifications')
-const usersCol = db.collection('uni-id-users')
 
 // ─── 响应封装 ───
 const success = (data, msg = 'success') => ({ code: 0, msg, data })

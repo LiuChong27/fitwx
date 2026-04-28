@@ -19,7 +19,7 @@ const chatService = {
 	 * @param {object} userInfo     目标用户信息快照 { nickname, avatar }
 	 * @returns {{ conversationId: string, isNew: boolean }}
 	 */
-	async getOrCreateConversation(targetUserId, userInfo = {}, context = null) {
+	async getOrCreateConversation(targetUserId, _userInfo = {}, context = null) {
 		if (!targetUserId) {
 			console.warn('[chatService] targetUserId is required');
 			return null;
@@ -122,6 +122,16 @@ const chatService = {
 			return await callUcenter('listConversations', { limit });
 		} catch (err) {
 			console.warn('[chatService] listConversations failed:', err);
+			throw err;
+		}
+	},
+
+	/** 清空当前用户所有私信未读数 */
+	async markAllConversationsRead() {
+		try {
+			return await callUcenter('markAllConversationsRead');
+		} catch (err) {
+			console.warn('[chatService] markAllConversationsRead failed:', err);
 			throw err;
 		}
 	},

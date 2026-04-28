@@ -1,0 +1,148 @@
+{
+  "bsonType": "object",
+  "required": ["reporter_id", "target_type", "target_id", "reason_code", "status", "created_at"],
+  "permission": {
+    "read": false,
+    "create": "auth.uid != null",
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "举报 ID"
+    },
+    "reporter_id": {
+      "bsonType": "string",
+      "description": "举报人用户 ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "reporter_nickname": {
+      "bsonType": "string",
+      "description": "举报人昵称",
+      "maxLength": 50,
+      "trim": "both"
+    },
+    "reporter_avatar": {
+      "bsonType": "string",
+      "description": "举报人头像 URL"
+    },
+    "target_type": {
+      "bsonType": "string",
+      "description": "举报对象类型",
+      "enum": ["feed", "chat_user"]
+    },
+    "target_id": {
+      "bsonType": "string",
+      "description": "举报对象 ID"
+    },
+    "target_user_id": {
+      "bsonType": "string",
+      "description": "被举报用户 ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "target_nickname": {
+      "bsonType": "string",
+      "description": "被举报对象昵称/标题",
+      "maxLength": 100,
+      "trim": "both"
+    },
+    "target_avatar": {
+      "bsonType": "string",
+      "description": "被举报对象头像 URL"
+    },
+    "target_content": {
+      "bsonType": "string",
+      "description": "举报对象摘要",
+      "maxLength": 500,
+      "trim": "both"
+    },
+    "conversation_id": {
+      "bsonType": "string",
+      "description": "关联会话 ID"
+    },
+    "reason_code": {
+      "bsonType": "string",
+      "description": "举报原因编码",
+      "enum": ["spam", "abuse", "fraud", "sexual", "illegal", "other"]
+    },
+    "reason_text": {
+      "bsonType": "string",
+      "description": "举报补充说明",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "moderation_status": {
+      "bsonType": "string",
+      "description": "内容安全状态: pass/review/block",
+      "enum": ["pass", "review", "block"],
+      "defaultValue": "pass"
+    },
+    "moderation_reason": {
+      "bsonType": "string",
+      "description": "命中规则原因",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "moderation_updated_at": {
+      "bsonType": "number",
+      "description": "内容安全检查时间戳(ms)"
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "处理状态: 0=待处理, 1=已处置, 2=已驳回",
+      "defaultValue": 0
+    },
+    "handle_action": {
+      "bsonType": "string",
+      "description": "处置动作",
+      "enum": ["pending", "remove_feed", "warn_user", "dismiss"],
+      "defaultValue": "pending"
+    },
+    "handle_remark": {
+      "bsonType": "string",
+      "description": "处置备注",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "handled_by": {
+      "bsonType": "string",
+      "description": "处理管理员 ID"
+    },
+    "handled_at": {
+      "bsonType": "number",
+      "description": "处理时间戳 (ms)"
+    },
+    "created_at": {
+      "bsonType": "number",
+      "description": "创建时间戳 (ms)"
+    },
+    "updated_at": {
+      "bsonType": "number",
+      "description": "更新时间戳 (ms)"
+    }
+  },
+  "indexes": [
+    {
+      "name": "idx_status_created_at",
+      "keyPath": {
+        "status": 1,
+        "created_at": -1
+      }
+    },
+    {
+      "name": "idx_target_status",
+      "keyPath": {
+        "target_type": 1,
+        "target_id": 1,
+        "status": 1
+      }
+    },
+    {
+      "name": "idx_reporter_created_at",
+      "keyPath": {
+        "reporter_id": 1,
+        "created_at": -1
+      }
+    }
+  ]
+}

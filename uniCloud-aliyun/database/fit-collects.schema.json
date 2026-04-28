@@ -28,5 +28,14 @@
         "$env": "now"
       }
     }
-  }
+  },
+  "indexes": [
+    {
+      "name": "idx_user_id_feed_id",
+      "keyPath": {
+        "user_id": 1,
+        "feed_id": 1
+      }
+    }
+  ]
 }

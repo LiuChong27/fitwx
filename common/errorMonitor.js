@@ -95,13 +95,14 @@ function getCurrentPageRoute() {
  */
 function getPlatformInfo() {
 	try {
-		const info = uni.getSystemInfoSync();
+		const device = uni.getDeviceInfo ? uni.getDeviceInfo() : {};
+		const app = uni.getAppBaseInfo ? uni.getAppBaseInfo() : {};
 		return {
-			platform: info.platform,
-			model: info.model,
-			system: info.system,
-			version: info.version,
-			SDKVersion: info.SDKVersion,
+			platform: device.platform || '',
+			model: device.model || '',
+			system: device.system || '',
+			version: app.SDKVersion || '',
+			SDKVersion: app.SDKVersion || '',
 		};
 	} catch (_) {
 		return {};

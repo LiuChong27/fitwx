@@ -45,6 +45,22 @@
       "description": "状态: 0=待审核, 1=正常, 2=已删除",
       "defaultValue": 1
     },
+    "moderation_status": {
+      "bsonType": "string",
+      "description": "内容安全状态: pass/review/block",
+      "enum": ["pass", "review", "block"],
+      "defaultValue": "pass"
+    },
+    "moderation_reason": {
+      "bsonType": "string",
+      "description": "命中规则原因",
+      "maxLength": 200,
+      "trim": "both"
+    },
+    "moderation_updated_at": {
+      "bsonType": "number",
+      "description": "内容安全检查时间戳(ms)"
+    },
     "create_date": {
       "bsonType": "timestamp",
       "description": "评论时间",

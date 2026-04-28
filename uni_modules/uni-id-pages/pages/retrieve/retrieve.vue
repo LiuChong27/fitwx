@@ -6,12 +6,13 @@
 			<image :src="logo"></image>
 		</view>
 		<!-- 顶部文字 -->
-		<text class="title title-box">通过手机验证码找回密码</text>
+		<text class="title title-box">{{ $t('login.page.retrieve.sms.title') }}</text>
+		<text class="tip">{{ $t('login.page.retrieve.sms.tip') }}</text>
 		</match-media>
 		<uni-forms ref="form" :value="formData" err-show-type="toast">
 			<uni-forms-item name="phone">
 				<uni-easyinput :focus="focusPhone" @blur="focusPhone = false" class="input-box" :disabled="lock" type="number" :inputBorder="false" trim="both"
-					v-model="formData.phone" maxlength="11" placeholder="请输入手机号">
+					v-model="formData.phone" maxlength="11" :placeholder="$t('login.page.retrieve.sms.phonePlaceholder')">
 				</uni-easyinput>
 			</uni-forms-item>
 			<uni-forms-item name="code">
@@ -20,18 +21,18 @@
 			</uni-forms-item>
 			<uni-forms-item name="password">
 				<uni-easyinput :focus="focusPassword" @blur="focusPassword = false" class="input-box" type="password" :inputBorder="false" v-model="formData.password" trim="both"
-					placeholder="请输入新密码"></uni-easyinput>
+					:placeholder="$t('login.page.retrieve.common.newPasswordPlaceholder')"></uni-easyinput>
 			</uni-forms-item>
 			<uni-forms-item name="password2">
 				<uni-easyinput :focus="focusPassword2" @blur="focusPassword2 = false" class="input-box" type="password" :inputBorder="false" v-model="formData.password2" trim="both"
-					placeholder="请再次输入新密码"></uni-easyinput>
+					:placeholder="$t('login.page.retrieve.common.passwordAgainPlaceholder')"></uni-easyinput>
 			</uni-forms-item>
-			<button class="uni-btn send-btn-box" type="primary" @click="submit">提交</button>
+			<button class="uni-btn send-btn-box" type="primary" @click="submit">{{ $t('login.page.retrieve.sms.button') }}</button>
 			<match-media :min-width="690">
 				<view class="link-box">
-					<text class="link" @click="retrieveByEmail">通过邮箱验证码找回密码</text>
+					<text class="link" @click="retrieveByEmail">{{ $t('login.page.retrieve.sms.emailSwitch') }}</text>
 					<view></view>
-          <text class="link" @click="backLogin">返回登录</text>
+					<text class="link" @click="backLogin">{{ $t('login.page.retrieve.common.backLogin') }}</text>
         </view>
 			</match-media>
 		</uni-forms>
@@ -41,10 +42,10 @@
 
 <script>
 	import mixin from '@/uni_modules/uni-id-pages/common/login-page.mixin.js';
+	import passwordMod from '@/uni_modules/uni-id-pages/pages/common/password.js'
+	import {authText, showAuthFailure, showAuthToast} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 	const uniIdCo = uniCloud.importObject("uni-id-co",{
-		errorOptions:{
-			type:'toast'
-		}
+		customUI: true
 	})
 	export default {
 		mixins: [mixin],
@@ -65,59 +66,29 @@
 					phone: {
 						rules: [{
 								required: true,
-								errorMessage: '请输入手机号',
+								errorMessage: authText('retrieve.sms.phoneRequired'),
 							},
 							{
 								pattern: /^1\d{10}$/,
-								errorMessage: '手机号码格式不正确',
+								errorMessage: authText('retrieve.sms.phoneInvalid'),
 							}
 						]
 					},
-					code: {
-						rules: [{
-								required: true,
-								errorMessage: '请输入短信验证码',
-							},
+			code: {
+				rules: [{
+						required: true,
+						errorMessage: authText('retrieve.sms.smsCodeRequired'),
+					},
 							{
 								pattern: /^.{6}$/,
-								errorMessage: '请输入6位验证码',
-							}
-						]
-					},
-					password: {
-						rules: [{
-								required: true,
-								errorMessage: '请输入新密码',
-							},
-							{
-								pattern: /^.{6,20}$/,
-								errorMessage: '密码为6 - 20位',
-							}
-						]
-					},
-					password2: {
-						rules: [{
-								required: true,
-								errorMessage: '请确认密码',
-							},
-							{
-								pattern: /^.{6,20}$/,
-								errorMessage: '密码为6 - 20位',
-							},
-							{
-								validateFunction: function(rule, value, data, callback) {
-									// console.log(value);
-									if (value != data.password) {
-										callback('两次输入密码不一致')
-									};
-									return true
-								}
-							}
-						]
+						errorMessage: authText('retrieve.sms.smsCodeInvalid'),
 					}
-				},
-				logo: "/static/logo.png"
-			}
+				]
+			},
+			...passwordMod.getPwdRules()
+		},
+		logo: "/static/logo.png"
+	}
 		},
 		computed: {
 			isPhone() {
@@ -180,11 +151,14 @@
 								password,
 								captcha
 							}).then(e => {
-								uni.navigateBack()
+								showAuthToast('retrieve.common.success')
+								uni.redirectTo({ url: '/pages/login/login-withpwd' })
 							})
 							.catch(e => {
 								if (e.errCode == 'uni-id-captcha-required') {
 									this.$refs.popup.open()
+								} else {
+									showAuthFailure((e && (e.message || e.errMsg)) || '')
 								}
 							}).finally(e => {
 								this.formData.captcha = ""

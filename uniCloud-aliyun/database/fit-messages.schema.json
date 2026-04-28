@@ -2,8 +2,8 @@
   "bsonType": "object",
   "required": ["conversation_id", "sender_id", "content"],
   "permission": {
-    "read": "auth.uid != null",
-    "create": "auth.uid != null && auth.uid == doc.sender_id",
+    "read": false,
+    "create": false,
     "update": false,
     "delete": false
   },
@@ -38,11 +38,25 @@
       "defaultValue": false
     },
     "create_date": {
-      "bsonType": "timestamp",
-      "description": "创建时间",
-      "forceDefaultValue": {
-        "$env": "now"
+      "bsonType": "number",
+      "description": "创建时间（毫秒时间戳）"
+    }
+  },
+  "indexes": [
+    {
+      "name": "idx_conversation_date",
+      "keyPath": {
+        "conversation_id": 1,
+        "create_date": -1
+      }
+    },
+    {
+      "name": "idx_conversation_read_sender",
+      "keyPath": {
+        "conversation_id": 1,
+        "read": 1,
+        "sender_id": 1
       }
     }
-  }
+  ]
 }

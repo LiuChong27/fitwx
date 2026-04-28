@@ -6,12 +6,13 @@
 				<image :src="logo"></image>
 			</view>
 			<!-- 顶部文字 -->
-			<text class="title title-box">通过邮箱验证码找回密码</text>
+			<text class="title title-box">{{ $t('login.page.retrieve.email.title') }}</text>
+			<text class="tip">{{ $t('login.page.retrieve.email.tip') }}</text>
 		</match-media>
 		<uni-forms ref="form" :value="formData" err-show-type="toast">
 			<uni-forms-item name="email">
 				<uni-easyinput :focus="focusEmail" @blur="focusEmail = false" class="input-box" :disabled="lock" :inputBorder="false" trim="both"
-					v-model="formData.email" placeholder="请输入邮箱">
+					v-model="formData.email" :placeholder="$t('login.page.retrieve.email.emailPlaceholder')">
 				</uni-easyinput>
 			</uni-forms-item>
 			<uni-forms-item name="code">
@@ -20,18 +21,18 @@
 			</uni-forms-item>
 			<uni-forms-item name="password">
 				<uni-easyinput :focus="focusPassword" @blur="focusPassword = false" class="input-box" type="password" :inputBorder="false" v-model="formData.password" trim="both"
-					placeholder="请输入新密码"></uni-easyinput>
+					:placeholder="$t('login.page.retrieve.common.newPasswordPlaceholder')"></uni-easyinput>
 			</uni-forms-item>
 			<uni-forms-item name="password2">
 				<uni-easyinput :focus="focusPassword2" @blur="focusPassword2 = false" class="input-box" type="password" :inputBorder="false" v-model="formData.password2" trim="both"
-					placeholder="请再次输入新密码"></uni-easyinput>
+					:placeholder="$t('login.page.retrieve.common.passwordAgainPlaceholder')"></uni-easyinput>
 			</uni-forms-item>
-			<button class="uni-btn send-btn-box" type="primary" @click="submit">提交</button>
+			<button class="uni-btn send-btn-box" type="primary" @click="submit">{{ $t('login.page.retrieve.email.button') }}</button>
 			<match-media :min-width="690">
 				<view class="link-box">
-					<text class="link" @click="retrieveByPhone">通过手机验证码找回密码</text>
+					<text class="link" @click="retrieveByPhone">{{ $t('login.page.retrieve.email.smsSwitch') }}</text>
 					<view></view>
-          <text class="link" @click="backLogin">返回登录</text>
+					<text class="link" @click="backLogin">{{ $t('login.page.retrieve.common.backLogin') }}</text>
         </view>
 			</match-media>
 		</uni-forms>
@@ -41,11 +42,10 @@
 
 <script>
 	import mixin from '@/uni_modules/uni-id-pages/common/login-page.mixin.js';
-	import passwordMod from '@/uni_modules/uni-id-pages/common/password.js'
+	import passwordMod from '@/uni_modules/uni-id-pages/pages/common/password.js'
+	import {authText, showAuthFailure, showAuthToast} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 	const uniIdCo = uniCloud.importObject("uni-id-co",{
-		errorOptions:{
-			type:'toast'
-		}
+		customUI: true
 	})
 	export default {
 		mixins: [mixin],
@@ -66,22 +66,22 @@
 					email: {
 						rules: [{
 								required: true,
-								errorMessage: '请输入邮箱',
+								errorMessage: authText('retrieve.email.emailRequired'),
 							},
 							{
 								format:'email',
-								errorMessage: '邮箱格式不正确',
+								errorMessage: authText('retrieve.email.emailInvalid'),
 							}
 						]
 					},
 					code: {
 						rules: [{
 								required: true,
-								errorMessage: '请输入邮箱验证码',
+								errorMessage: authText('retrieve.email.emailCodeRequired'),
 							},
 							{
 								pattern: /^.{6}$/,
-								errorMessage: '请输入6位验证码',
+								errorMessage: authText('retrieve.email.emailCodeInvalid'),
 							}
 						]
 					},
@@ -151,16 +151,16 @@
 								password,
 								captcha
 							}).then(e => {
-								uni.navigateTo({
-									url: '/pages/login/login-withpwd',
-									complete: (e) => {
-										// console.log(e);
-									}
+								showAuthToast('retrieve.common.success')
+								uni.redirectTo({
+									url: '/pages/login/login-withpwd'
 								})
 							})
 							.catch(e => {
 								if (e.errCode == 'uni-id-captcha-required') {
 									this.$refs.popup.open()
+								} else {
+									showAuthFailure((e && (e.message || e.errMsg)) || '')
 								}
 							}).finally(e => {
 								this.formData.captcha = ""

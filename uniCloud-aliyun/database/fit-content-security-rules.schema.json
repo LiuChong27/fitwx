@@ -1,0 +1,86 @@
+{
+  "bsonType": "object",
+  "required": ["scene", "mode", "word"],
+  "permission": {
+    "read": false,
+    "create": false,
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "规则ID"
+    },
+    "scene": {
+      "bsonType": "string",
+      "description": "作用场景: all/feed/comment/invite/report",
+      "enum": ["all", "feed", "comment", "invite", "report"],
+      "defaultValue": "all"
+    },
+    "mode": {
+      "bsonType": "string",
+      "description": "命中动作: review=进入审核, block=直接拦截",
+      "enum": ["review", "block"],
+      "defaultValue": "review"
+    },
+    "word": {
+      "bsonType": "string",
+      "description": "关键词/表达式",
+      "trim": "both",
+      "maxLength": 100
+    },
+    "match_mode": {
+      "bsonType": "string",
+      "description": "匹配方式: contains/exact/regex",
+      "enum": ["contains", "exact", "regex"],
+      "defaultValue": "contains"
+    },
+    "enabled": {
+      "bsonType": "bool",
+      "description": "是否启用",
+      "defaultValue": true
+    },
+    "priority": {
+      "bsonType": "int",
+      "description": "优先级（升序）",
+      "defaultValue": 100,
+      "minimum": 0
+    },
+    "remark": {
+      "bsonType": "string",
+      "description": "备注",
+      "trim": "both",
+      "maxLength": 200
+    },
+    "create_date": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "update_date": {
+      "bsonType": "timestamp",
+      "description": "更新时间"
+    }
+  },
+  "indexes": [
+    {
+      "name": "idx_enabled_scene_mode_priority",
+      "keyPath": {
+        "enabled": 1,
+        "scene": 1,
+        "mode": 1,
+        "priority": 1
+      }
+    },
+    {
+      "name": "idx_scene_word_mode",
+      "keyPath": {
+        "scene": 1,
+        "word": 1,
+        "mode": 1
+      }
+    }
+  ]
+}

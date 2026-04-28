@@ -1,15 +1,39 @@
 import pagesJson from '@/pages.json'
 import config from '@/uni_modules/uni-id-pages/config.js'
+import {
+	authText
+} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 
 const uniIdCo = uniCloud.importObject("uni-id-co")
 const db = uniCloud.database();
 const usersTable = db.collection('uni-id-users')
 
 let hostUserInfo = uni.getStorageSync('uni-id-pages-userInfo')||{}
+let hasWarnedUniIdUsersClientDbSyncIssue = false
 
 const data = {
 	userInfo: hostUserInfo,
 	hasLogin: Object.keys(hostUserInfo).length != 0
+}
+
+function classifyUniIdUsersClientDbError(error) {
+	const raw = `${error?.errCode || ''} ${error?.message || ''} ${error?.errMsg || ''}`.toLowerCase()
+	if (
+		raw.includes('schema') &&
+		(raw.includes('missing') || raw.includes('not found') || raw.includes('schema error'))
+	) {
+		return 'schema missing'
+	}
+	if (raw.includes('collection') && (raw.includes('not exist') || raw.includes('not found'))) {
+		return 'collection missing'
+	}
+	if (raw.includes('permission') || raw.includes('auth') || raw.includes('forbidden') || raw.includes('denied')) {
+		return 'permission denied'
+	}
+	if (raw.includes('token') && (raw.includes('invalid') || raw.includes('expired'))) {
+		return 'token invalid'
+	}
+	return 'unknown'
 }
 
 // 定义 mutations, 修改属性
@@ -56,8 +80,16 @@ export const mutations = {
 					realNameAuth: realNameRes
 				})
 			} catch (e) {
-				this.setUserInfo({},{cover:true})
-				console.error(e.message, e.errCode);
+				const payload = {
+					collection: 'uni-id-users',
+					category: classifyUniIdUsersClientDbError(e),
+					errCode: e && e.errCode,
+					message: (e && (e.message || e.errMsg)) || ''
+				}
+				if (!hasWarnedUniIdUsersClientDbSyncIssue) {
+					console.warn('[login][post-login-user-sync] uni-id-users clientDB query failed; preserving auth identity and skipping profile sync until schema is published', payload);
+					hasWarnedUniIdUsersClientDbSyncIssue = true
+				}
 			}
 		}
 	},
@@ -93,7 +125,8 @@ export const mutations = {
 		let pages = getCurrentPages();
 		// console.log(pages);
 		pages.forEach((page, index) => {
-			if (pages[pages.length - index - 1].route.split('/')[3] == 'login') {
+			const route = pages[pages.length - index - 1].route || ''
+			if (route.split('/')[3] == 'login' || route.split('/')[1] == 'login') {
 				delta++
 			}
 		})
@@ -125,13 +158,24 @@ export const mutations = {
 			})
 		}
 
-		uni.navigateBack({
-			delta
+		const fallbackPage = pagesJson.pages && pagesJson.pages[0]
+		if (fallbackPage && fallbackPage.path) {
+			return uni.reLaunch({
+				url: `/${fallbackPage.path}`
+			})
+		}
+		return uni.switchTab({
+			url: '/pages/grid/discover'
 		})
 	},
 	loginSuccess(e = {}){
 		const {
-			showToast = true, toastText = '登录成功', autoBack = true, uniIdRedirectUrl = '', passwordConfirmed
+			showToast = true,
+			toastText = authText('success'),
+			toastDuration = 1200,
+			autoBack = true,
+			uniIdRedirectUrl = '',
+			passwordConfirmed
 		} = e
 		const payload = e.result || e || {}
 		const incomingToken = payload.token || payload.uniIdToken || payload.uni_id_token || payload.accessToken || ''
@@ -142,7 +186,7 @@ export const mutations = {
 			uni.showToast({
 				title: toastText,
 				icon: 'none',
-				duration: 3000
+				duration: toastDuration
 			});
 		}
 		if (incomingToken) {

@@ -1,56 +1,59 @@
-import passwordMod from '@/uni_modules/uni-id-pages/common/password.js'
+import passwordMod from '@/uni_modules/uni-id-pages/pages/common/password.js'
+import {
+	authText
+} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 export default {
 	"username": {
 		"rules": [{
 				required: true,
-				errorMessage: '请输入用户名',
+				errorMessage: authText('register.rules.usernameRequired'),
 			},
 			{
 				minLength: 3,
 				maxLength: 32,
-				errorMessage: '用户名长度在 {minLength} 到 {maxLength} 个字符',
+				errorMessage: authText('register.rules.usernameLength'),
 			},
 			{
 				validateFunction: function(rule, value, data, callback) {
 					// console.log(value);
 					if (/^1\d{10}$/.test(value) || /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/.test(value)) {
-						callback('用户名不能是：手机号或邮箱')
+						callback(authText('register.rules.usernameNoPhoneOrEmail'))
 					};
 					if (/^\d+$/.test(value)) {
-						callback('用户名不能为纯数字')
+						callback(authText('register.rules.usernameNoNumber'))
 					};
 					if(/[\u4E00-\u9FA5\uF900-\uFA2D]{1,}/.test(value)){
-						callback('用户名不能包含中文')
+						callback(authText('register.rules.usernameNoChinese'))
 					}
 					return true
 				}
 			}
 		],
-		"label": "用户名"
+		"label": authText('register.rules.usernameLabel')
 	},
 	"nickname": {
 		"rules": [{
 				minLength: 3,
 				maxLength: 32,
-				errorMessage: '昵称长度在 {minLength} 到 {maxLength} 个字符',
+				errorMessage: authText('register.rules.nicknameLength'),
 			},
 			{
 				validateFunction: function(rule, value, data, callback) {
 					// console.log(value);
 					if (/^1\d{10}$/.test(value) || /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/.test(value)) {
-						callback('昵称不能是：手机号或邮箱')
+						callback(authText('register.rules.nicknameNoPhoneOrEmail'))
 					};
 					if (/^\d+$/.test(value)) {
-						callback('昵称不能为纯数字')
+						callback(authText('register.rules.nicknameNoNumber'))
 					};
 					if(/[\u4E00-\u9FA5\uF900-\uFA2D]{1,}/.test(value)){
-						callback('昵称不能包含中文')
+						callback(authText('register.rules.nicknameNoChinese'))
 					}
 					return true
 				}
 			}
 		],
-		"label": "昵称"
+		"label": authText('register.rules.nicknameLabel')
 	},
 	...passwordMod.getPwdRules()
 }

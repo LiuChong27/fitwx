@@ -1,0 +1,30 @@
+{
+  "dcloudAppid": "__UNI__5F9D2EE",
+  "mediaCheck": {
+    "enabled": true,
+    "scene": 4,
+    "version": 2,
+    "mediaType": 2,
+    "notifyUrl": "https://fc-mp-724daff2-7ae8-41e3-b066-d0fde9cadc24.next.bspapp.com/fit-discover-api",
+    "blockedImageLabels": [
+      "porn",
+      "sexual",
+      "sexy",
+      "nudity",
+      "nude",
+      "exposure",
+      "exhibitionism",
+      "exhibitionist",
+      "色情",
+      "裸露",
+      "暴露",
+      "暴露狂",
+      "露点"
+    ]
+  },
+  "callback": {
+    "token": "fitMediaAuditToken2026",
+    "mode": "plaintext",
+    "messageFormat": "json"
+  }
+}

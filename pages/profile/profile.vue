@@ -5,7 +5,7 @@
 			:status-bar="true"
 			title="主页"
 			:border="false"
-			backgroundColor="#0D1B2A"
+			backgroundColor="#08131D"
 			color="#ffffff"
 			@back="onBack"
 		/>
@@ -15,6 +15,12 @@
 			<image v-if="profile.coverUrl" class="cover-img" :src="optimizedCoverUrl" mode="aspectFill" aria-hidden="true" />
 			<view v-else class="cover-img cover-placeholder"></view>
 			<view class="cover-mask"></view>
+		</view>
+
+		<view class="profile-summary">
+			<view class="summary-chip">公开主页</view>
+			<text class="summary-title">{{ profile.nickname || '用户主页' }}</text>
+			<text class="summary-desc">查看对方的训练标签、个人简介和常去场馆，再决定是否发起聊天。</text>
 		</view>
 
 		<!-- 用户信息卡片 -->
@@ -52,6 +58,17 @@
 			</view>
 		</view>
 
+		<view class="info-grid">
+			<view class="info-card">
+				<text class="info-card__label">性别年龄</text>
+				<text class="info-card__value">{{ profile.gender || '未填写' }}{{ profile.age ? (profile.gender ? ' · ' : '') + profile.age + '岁' : '' }}</text>
+			</view>
+			<view class="info-card">
+				<text class="info-card__label">常去场馆</text>
+				<text class="info-card__value">{{ profile.gyms && profile.gyms.length ? profile.gyms.length + ' 个' : '未填写' }}</text>
+			</view>
+		</view>
+
 		<!-- 操作按钮 -->
 		<view class="actions">
 			<button class="btn-chat" aria-label="发起私信" @click="startChat">
@@ -64,7 +81,9 @@
 
 <script>
 import apiService from '@/services/apiService.js';
+import chatService from '@/services/chatService.js';
 import { coverUrl, avatarUrl as optimizedAvatar } from '@/common/imageOptimizer.js';
+import storage from '@/common/storage.js';
 
 export default {
 	data() {
@@ -72,6 +91,7 @@ export default {
 			userId: '',
 			loading: false,
 			isOnline: false,
+			presenceTimer: null,
 			profile: {
 				userId: '',
 				nickname: '',
@@ -100,6 +120,15 @@ export default {
 		}
 		this.loadProfile();
 	},
+	onShow() {
+		this.startPresenceCheck();
+	},
+	onHide() {
+		this.stopPresenceCheck();
+	},
+	onUnload() {
+		this.stopPresenceCheck();
+	},
 	methods: {
 		onBack() {
 			uni.navigateBack();
@@ -119,12 +148,29 @@ export default {
 				this.loading = false;
 			}
 		},
+		startPresenceCheck() {
+			this.stopPresenceCheck();
+			this.pingOnline();
+			this.presenceTimer = setInterval(() => this.pingOnline(), 30000);
+		},
+		stopPresenceCheck() {
+			if (this.presenceTimer) {
+				clearInterval(this.presenceTimer);
+				this.presenceTimer = null;
+			}
+		},
+		async pingOnline() {
+			if (!this.userId) return;
+			const res = await chatService.heartbeat(this.userId);
+			if (res && typeof res.targetOnline === 'boolean') {
+				this.isOnline = res.targetOnline;
+			}
+		},
 		startChat() {
 			if (!this.userId) return;
 			// 给 chat 页写入用户快照（与 discover 同一策略）
 			try {
-				const storageModule = require('@/common/storage.js');
-				storageModule.default.set(`user_${this.userId}`, {
+				storage.set(`user_${this.userId}`, {
 					nickname: this.profile.nickname,
 					avatar: this.profile.avatarUrl,
 				});
@@ -142,7 +188,9 @@ export default {
 
 .page {
 	min-height: 100vh;
-	background: $neu-dark-bg;
+	background:
+		radial-gradient(circle at top right, rgba(114, 228, 200, 0.1), transparent 26%),
+		linear-gradient(180deg, #0B1822 0%, #08131D 100%);
 	padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
@@ -159,7 +207,7 @@ export default {
 	display: block;
 }
 .cover-placeholder {
-	background: linear-gradient(135deg, #0D1B2A 0%, #132136 60%, rgba(0,229,255,0.08) 100%);
+	@include fit-image-placeholder(0, 0);
 }
 .cover-mask {
 	position: absolute;
@@ -171,6 +219,40 @@ export default {
 	pointer-events: none;
 }
 
+
+.profile-summary {
+	margin: -30rpx 24rpx 0;
+	position: relative;
+	z-index: 2;
+	padding: 24rpx 4rpx 12rpx;
+}
+
+.summary-chip {
+	display: inline-flex;
+	padding: 10rpx 18rpx;
+	border-radius: 999rpx;
+	background: rgba(114, 228, 200, 0.12);
+	color: #72E4C8;
+	font-size: 22rpx;
+	font-weight: 600;
+}
+
+.summary-title {
+	display: block;
+	margin-top: 18rpx;
+	font-size: 42rpx;
+	font-weight: 700;
+	color: #FFFFFF;
+}
+
+.summary-desc {
+	display: block;
+	margin-top: 10rpx;
+	font-size: 24rpx;
+	line-height: 1.6;
+	color: rgba(255,255,255,0.6);
+}
+
 /* 用户信息卡片 */
 .profile-card {
 	margin: -60rpx 24rpx 0;
@@ -179,6 +261,8 @@ export default {
 	position: relative;
 	z-index: 2;
 	animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+	background: linear-gradient(180deg, rgba(16, 32, 45, 0.95), rgba(10, 20, 30, 0.94));
+	box-shadow: 0 18rpx 44rpx rgba(0,0,0,0.2);
 }
 .header {
 	display: flex;
@@ -194,7 +278,7 @@ export default {
 	height: 128rpx;
 	border-radius: 50%;
 	background: rgba(255, 255, 255, 0.05);
-	border: 4rpx solid rgba(0, 229, 255, 0.2);
+	border: 4rpx solid rgba(114, 228, 200, 0.2);
 	box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.4);
 }
 .default-avatar {
@@ -254,19 +338,47 @@ export default {
 .tag {
 	font-size: 24rpx;
 	color: rgba(255, 255, 255, 0.9);
-	background: rgba(0, 229, 255, 0.1);
+	background: rgba(114, 228, 200, 0.1);
 	padding: 8rpx 20rpx;
 	border-radius: 24rpx;
-	border: 1rpx solid rgba(0, 229, 255, 0.18);
+	border: 1rpx solid rgba(114, 228, 200, 0.18);
 }
 .bio {
 	font-size: 28rpx;
 	color: rgba(255,255,255,0.75);
 	line-height: 1.7;
 	padding: 16rpx 20rpx;
-	background: rgba(0, 229, 255, 0.04);
+	background: rgba(114, 228, 200, 0.05);
 	border-radius: 16rpx;
-	border: 1rpx solid rgba(0, 229, 255, 0.06);
+	border: 1rpx solid rgba(114, 228, 200, 0.08);
+}
+
+.info-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16rpx;
+	margin: 24rpx 24rpx 0;
+}
+
+.info-card {
+	padding: 24rpx;
+	border-radius: 24rpx;
+	background: rgba(255,255,255,0.04);
+	border: 1rpx solid rgba(255,255,255,0.06);
+}
+
+.info-card__label {
+	display: block;
+	font-size: 22rpx;
+	color: rgba(255,255,255,0.5);
+	margin-bottom: 10rpx;
+}
+
+.info-card__value {
+	display: block;
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #FFFFFF;
 }
 
 /* 操作按钮 */
@@ -286,7 +398,7 @@ export default {
 	font-size: 30rpx;
 }
 .btn-text {
-	color: #0A1628;
+	color: #08131D;
 	font-weight: 700;
 	font-size: 30rpx;
 }

@@ -1,28 +1,34 @@
 <!-- 绑定手机号码页 -->
 <template>
-	<view class="uni-content">
-		<match-media :min-width="690">
-			<view class="login-logo">
-				<image :src="logo"></image>
+	<view class="bind-mobile-page">
+		<view class="bind-mobile-shell">
+			<view class="bind-header">
+				<text class="bind-title">{{ $t('login.page.bindMobile.title') }}</text>
+				<text class="bind-desc">{{ $t('login.page.bindMobile.tip') }}</text>
 			</view>
-			<!-- 顶部文字 -->
-			<text class="title title-box">绑定手机号</text>
-		</match-media>
-		<!-- 登录框 (选择手机号所属国家和地区需要另行实现) -->
-		<uni-easyinput clearable :focus="focusMobile" @blur="focusMobile = false" type="number" class="input-box" :inputBorder="false" v-model="formData.mobile"
-			maxlength="11" placeholder="请输入手机号"></uni-easyinput>
-		<uni-id-pages-sms-form ref="smsForm" type="bind-mobile-by-sms" v-model="formData.code" :phone="formData.mobile">
-		</uni-id-pages-sms-form>
-		<button class="uni-btn send-btn-box" type="primary" @click="submit">提交</button>
-		<uni-popup-captcha @confirm="submit" v-model="formData.captcha" scene="bind-mobile-by-sms" ref="popup">
-		</uni-popup-captcha>
+
+			<view class="form-section">
+				<uni-easyinput clearable :focus="focusMobile" @blur="focusMobile = false"
+					type="number" class="dark-input" :inputBorder="false"
+					v-model="formData.mobile" maxlength="11"
+					:placeholder="$t('login.page.bindMobile.mobilePlaceholder')"></uni-easyinput>
+				<uni-id-pages-sms-form ref="smsForm" type="bind-mobile-by-sms"
+					v-model="formData.code" :phone="formData.mobile">
+				</uni-id-pages-sms-form>
+				<button class="btn-submit" @click="submit" :loading="submitting">{{ $t('login.page.bindMobile.button') }}</button>
+			</view>
+
+			<uni-popup-captcha @confirm="submit" v-model="formData.captcha"
+				scene="bind-mobile-by-sms" ref="popup">
+			</uni-popup-captcha>
+		</view>
 	</view>
 </template>
 <script>
 	import {
-		store,
 		mutations
 	} from '@/uni_modules/uni-id-pages/common/store.js'
+	import {showAuthFailure, showAuthToast} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 	export default {
 		data() {
 			return {
@@ -31,101 +37,131 @@
 					code: "",
 					captcha: ""
 				},
-				focusMobile:true,
-				logo: "/static/logo.png"
-			}
-		},
-		computed: {
-			tipText() {
-				return `验证码已通过短信发送至 ${this.formData.mobile}。密码为6 - 20位`
+				focusMobile: true,
+				submitting: false
 			}
 		},
 		onLoad(event) {},
 		onReady() {},
 
 		methods: {
-			/**
-			 * 完成并提交
-			 */
+			onBindSuccess(mobile) {
+				// 同步手机号到 store
+				mutations.setUserInfo({ mobile, mobile_confirmed: 1 });
+				showAuthToast('bindMobile.success');
+				uni.navigateBack();
+			},
+
 			submit() {
-				if(! /^1\d{10}$/.test(this.formData.mobile)){
-					this.focusMobile = true 
+				if (!/^1\d{10}$/.test(this.formData.mobile)) {
+					this.focusMobile = true;
 					return uni.showToast({
-						title: '手机号码格式不正确',
+						title: this.$t('login.page.bindMobile.phoneInvalid'),
 						icon: 'none',
 						duration: 3000
 					});
 				}
-				if(! /^\d{6}$/.test(this.formData.code)){
-					this.$refs.smsForm.focusSmsCodeInput = true 
+				if (!/^\d{6}$/.test(this.formData.code)) {
+					this.$refs.smsForm.focusSmsCodeInput = true;
 					return uni.showToast({
-						title: '验证码格式不正确',
+						title: this.$t('login.page.bindMobile.codeInvalid'),
 						icon: 'none',
 						duration: 3000
 					});
 				}
-				
-				const uniIdCo = uniCloud.importObject("uni-id-co")
-				uniIdCo.bindMobileBySms(this.formData).then(e => {
-					uni.showToast({
-						title: e.errMsg,
-						icon: 'none',
-						duration: 3000
+				if (this.submitting) return;
+				this.submitting = true;
+				uni.showLoading({ title: this.$t('login.page.bindMobile.loading'), mask: true });
+
+				const uniIdCo = uniCloud.importObject("uni-id-co", { customUI: true });
+				uniIdCo.bindMobileBySms(this.formData)
+					.then(e => {
+						uni.hideLoading();
+						this.onBindSuccess(this.formData.mobile);
+					})
+					.catch(e => {
+						uni.hideLoading();
+						console.error('短信绑定手机号失败:', e);
+						if (e.errCode == 'uni-id-captcha-required') {
+							this.$refs.popup.open();
+						} else {
+							const errMsg = (e && (e.message || e.errMsg)) || this.$t('login.page.bindMobile.failed');
+							showAuthFailure(errMsg);
+						}
+					})
+					.finally(() => {
+						this.submitting = false;
+						this.formData.captcha = "";
 					});
-					// #ifdef APP-NVUE
-					const eventChannel = this.$scope.eventChannel; // 兼容APP-NVUE
-					// #endif
-					// #ifndef APP-NVUE
-					const eventChannel = this.getOpenerEventChannel();
-					// #endif
-					mutations.setUserInfo(this.formData)
-					uni.navigateBack()
-				}).catch(e => {
-					console.log(e);
-					if (e.errCode == 'uni-id-captcha-required') {
-						this.$refs.popup.open()
-					}
-				}).finally(e => {
-					this.formData.captcha = ""
-				})
 			}
 		}
 	}
 </script>
 
-<style lang="scss">
-	@import "@/uni_modules/uni-id-pages/common/login-page.scss";
+<style lang="scss" scoped>
+	@import "@/uni.scss";
 
-	.uni-content {
-		padding: 0;
+	.bind-mobile-page {
+		min-height: 100vh;
+		background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 60rpx 40rpx 40rpx;
+	}
+
+	.bind-mobile-shell {
+		width: 100%;
+		max-width: 680rpx;
+	}
+
+	.bind-header {
+		margin-bottom: 60rpx;
+	}
+
+	.bind-title {
+		display: block;
+		font-size: 48rpx;
+		font-weight: 700;
+		color: #ffffff;
+		margin-bottom: 16rpx;
+	}
+
+	.bind-desc {
+		display: block;
+		font-size: 28rpx;
+		color: rgba(255, 255, 255, 0.6);
+	}
+
+	/* 表单区 */
+	.form-section {
+		width: 100%;
+	}
+
+	.dark-input {
+		background: rgba(255, 255, 255, 0.08);
+		border-radius: 16rpx;
+		margin-bottom: 24rpx;
+		padding: 0 24rpx;
+	}
+
+	/* 提交按钮 */
+	.btn-submit {
+		width: 100%;
+		height: 96rpx;
+		background: linear-gradient(135deg, #72E4C8 0%, #59d0b0 100%);
+		border-radius: 48rpx;
+		color: #1a1a2e;
+		font-size: 32rpx;
+		font-weight: 600;
+		margin-top: 40rpx;
+		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 50rpx;
-		padding-top: 10px;
-	}
-	
-	
-	@media screen and (min-width: 690px) {
-		.uni-content{
-			padding: 30px 40px 40px;
-		}
+		border: none;
 	}
 
-	/* #ifndef APP-NVUE  || VUE3 */
-	.uni-content ::v-deep .uni-easyinput__content {}
-
-	/* #endif */
-	.input-box {
-		width: 100%;
-		margin-top: 16px;
-		background-color: #f9f9f9;
-		border-radius: 6rpx;
-		flex-direction: row;
-		flex-wrap: nowrap;
-		margin-bottom: 10px;
-	}
-
-	.send-btn-box {
-		margin-top: 15px;
+	.btn-submit::after {
+		border: none;
 	}
 </style>

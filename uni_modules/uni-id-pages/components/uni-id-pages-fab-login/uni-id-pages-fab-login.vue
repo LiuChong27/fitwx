@@ -13,6 +13,7 @@
 	import config from '@/uni_modules/uni-id-pages/config.js'
 	//前一个窗口的页面地址。控制点击切换快捷登录方式是创建还是返回
 	import {store,mutations} from '@/uni_modules/uni-id-pages/common/store.js'
+	import {showAuthFailure} from '@/uni_modules/uni-id-pages/common/auth-ui.js'
 	let allServicesList = []
 	export default {
 		computed: {
@@ -491,22 +492,13 @@
 					customUI:true
 				})
 				uniIdCo[action](params).then(result => {
-					uni.showToast({
-						title: '登录成功',
-						icon: 'none',
-						duration: 2000
-					});
 					// #ifdef H5
 					result.loginType = type
 					// #endif
 					mutations.loginSuccess(result)
 				})
 				.catch(e=>{
-					uni.showModal({
-						content: e.message,
-						confirmText:"知道了",
-						showCancel: false
-					});
+					showAuthFailure(e.message);
 				})
 				.finally(e => {
 					if (type == 'univerify') {

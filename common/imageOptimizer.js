@@ -28,7 +28,7 @@ export function supportsWebP() {
 
   // #ifdef APP-PLUS || MP-WEIXIN
   _supportsWebP = true
-  return true
+  
   // #endif
 
   // #ifdef H5
@@ -38,13 +38,14 @@ export function supportsWebP() {
   } catch (_) {
     _supportsWebP = false
   }
-  return _supportsWebP
+  
   // #endif
 
   // 其他平台默认开启
-  // eslint-disable-next-line no-unreachable
-  _supportsWebP = true
-  return true
+  if (_supportsWebP === null) {
+    _supportsWebP = true
+  }
+  return _supportsWebP
 }
 
 /**
@@ -57,6 +58,7 @@ export function supportsWebP() {
 export function webpUrl(url) {
   if (!url || typeof url !== 'string') return url || ''
   if (!supportsWebP()) return url
+  if (isCloudFileId(url)) return url
 
   // 只处理阿里云 OSS / uniCloud 云存储 URL
   if (!isOssUrl(url)) return url
@@ -80,6 +82,7 @@ export function webpUrl(url) {
  */
 export function thumbnailUrl(url, width = 200, quality = 80) {
   if (!url || typeof url !== 'string') return url || ''
+  if (isCloudFileId(url)) return url
   if (!isOssUrl(url)) return url
 
   const params = [`resize,w_${width}`, `quality,Q_${quality}`]
@@ -101,6 +104,7 @@ export function thumbnailUrl(url, width = 200, quality = 80) {
  */
 export function avatarUrl(url, size = 120) {
   if (!url || typeof url !== 'string') return url || ''
+  if (isCloudFileId(url)) return url
   if (!isOssUrl(url)) return url
 
   const params = [
@@ -124,6 +128,7 @@ export function avatarUrl(url, size = 120) {
  */
 export function coverUrl(url, width = 750) {
   if (!url || typeof url !== 'string') return url || ''
+  if (isCloudFileId(url)) return url
   if (!isOssUrl(url)) return url
 
   const height = Math.round(width * 9 / 16)
@@ -151,6 +156,10 @@ function isOssUrl(url) {
     url.startsWith('cloud://') ||
     url.includes('vkceyugu.cdn')
   )
+}
+
+function isCloudFileId(url) {
+  return typeof url === 'string' && url.startsWith('cloud://')
 }
 
 export default {

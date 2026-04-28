@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import passwordMod from '@/uni_modules/uni-id-pages/common/password.js'
+import passwordMod from '@/uni_modules/uni-id-pages/pages/common/password.js'
 import {store, mutations} from '@/uni_modules/uni-id-pages/common/store.js'
 import config from '@/uni_modules/uni-id-pages/config.js'
 

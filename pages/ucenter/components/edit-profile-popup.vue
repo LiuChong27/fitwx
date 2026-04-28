@@ -18,9 +18,20 @@
           <text class="edit-avatar-tip">更换</text>
         </view>
       </view>
+      <fit-state-panel
+        v-if="!avatarSrc"
+        class="avatar-state"
+        compact
+        scene="profile"
+        :kicker="$t('state.profile.avatarEmpty.kicker')"
+        :title="$t('state.profile.avatarEmpty.title')"
+        :description="$t('state.profile.avatarEmpty.description')"
+        :action-text="$t('state.generic.uploadAvatar')"
+        @action="$emit('choose-avatar')"
+      />
       <view class="edit-row">
         <text class="edit-label">昵称</text>
-        <input v-model="form.nickname" class="edit-input" placeholder="输入昵称" maxlength="20" />
+        <input v-model="form.nickname" class="edit-input" placeholder="请输入昵称" maxlength="20" />
       </view>
       <view class="edit-row">
         <text class="edit-label">性别</text>
@@ -34,11 +45,11 @@
       </view>
       <view class="edit-row">
         <text class="edit-label">城市</text>
-        <input v-model="form.city" class="edit-input" placeholder="所在城市" maxlength="20" />
+        <input v-model="form.city" class="edit-input" placeholder="请输入所在城市" maxlength="20" />
       </view>
       <view class="edit-row">
         <text class="edit-label">健身房</text>
-        <input v-model="form.gymsText" class="edit-input" placeholder="多个用逗号分隔" />
+        <input v-model="form.gymsText" class="edit-input" placeholder="多个场馆请用逗号分隔" />
       </view>
       <view class="edit-row">
         <text class="edit-label">单身认证</text>
@@ -54,9 +65,13 @@
 
 <script>
 import apiService from '@/services/apiService.js'
+import FitStatePanel from '@/components/fit-state-panel.vue'
 
 export default {
   name: 'EditProfilePopup',
+  components: {
+    FitStatePanel,
+  },
   props: {
     profile: { type: Object, default: () => ({}) },
     avatarSrc: { type: String, default: '' },
@@ -165,6 +180,13 @@ export default {
   padding: 20rpx 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+.avatar-state {
+  margin-top: 8rpx;
+  margin-bottom: 12rpx;
+  padding-left: 0;
+  padding-right: 0;
+}
 .edit-label {
   font-size: 28rpx;
   color: rgba(255, 255, 255, 0.7);
@@ -195,7 +217,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
+  @include fit-image-placeholder(50%, 0);
 }
 .edit-avatar-tip {
   font-size: 24rpx;

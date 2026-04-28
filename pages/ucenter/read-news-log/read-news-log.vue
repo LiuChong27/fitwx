@@ -1,12 +1,12 @@
 <template>
 	<view class="container">
-		<unicloud-db ref="udb" v-slot:default="{data, pagination, loading, hasMore, error}" :where="udbWhere"
+		<unicloud-db ref="udb" v-slot="{data, pagination, loading, hasMore, error}" :where="udbWhere"
 			collection="opendb-news-articles" @load="isLoading == false" @error="isLoading == false"
 			field="title,_id" :page-size="10">
 			<uni-list>
 				<uni-list-item v-for="(item, index) in data" :key="index" :clickable="true"
 					@click="handleItemClick(item)">
-					<template v-slot:body>
+					<template #body>
 						<view class="item">
 							<text>{{item.title}}</text>
 							<uni-dateformat class="article-date" :date="readNewsLog[index].last_time" format="yyyy-MM-dd hh:mm"
@@ -36,8 +36,7 @@
 		},
 		onLoad() {
 			this.readNewsLog = uni.getStorageSync('readNewsLog')||[];
-			let readNewsLogIds = this.readNewsLog.map(({article_id})=>article_id)
-			console.log(typeof readNewsLogIds,readNewsLogIds);
+			const readNewsLogIds = this.readNewsLog.map(({article_id})=>article_id)
 			this.udbWhere = `"_id" in ${JSON.stringify(readNewsLogIds)}`
 			uni.setNavigationBarTitle({
 				title: this.$t('newsLog.navigationBarTitle')
@@ -53,7 +52,7 @@
 			refreshData() {
 				this.$refs.udb.loadData({
 					clear: true
-				}, (res) => {
+				}, (_res) => {
 					uni.stopPullDownRefresh()
 				})
 			},

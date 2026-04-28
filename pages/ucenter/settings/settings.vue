@@ -1,6 +1,6 @@
 <template>
 	<view class="content">
-		<!-- 功能列表 -->
+		<!-- Feature List -->
 		<uni-list class="mt10" :border="false">
 			<uni-list-item :title="$t('settings.userInfo')" to="/uni_modules/uni-id-pages/pages/userinfo/userinfo" link="navigateTo"></uni-list-item>
 			<uni-list-item v-if="userInfo.mobile" :title="$t('settings.changePassword')" :to="'/pages/ucenter/login-page/pwd-retrieve/pwd-retrieve?phoneNumber='+ userInfo.mobile" link="navigateTo"></uni-list-item>
@@ -8,17 +8,20 @@
 		<uni-list class="mt10" :border="false">
 		<!-- #ifndef H5 -->
 			<!-- #ifdef APP-PLUS -->
-			<!-- 检查push过程未结束不显示，push设置项 -->
+			<!-- Hide push settings until push flow is ready -->
 			<uni-list-item :title="$t('settings.clearTmp')" @click="clearTmp" link></uni-list-item>
-			<uni-list-item v-show="pushIsOn != 'wait'" :title="$t('settings.pushServer')" @click.native="pushIsOn?pushServer.off():pushServer.on()"  showSwitch :switchChecked="pushIsOn"></uni-list-item>
+			<uni-list-item v-show="pushIsOn !== 'wait'" :title="$t('settings.pushServer')" @click="pushIsOn?pushServer.off():pushServer.on()"  showSwitch :switchChecked="pushIsOn"></uni-list-item>
 			<!-- #endif -->
-			<uni-list-item v-if="supportMode.includes('fingerPrint')" :title="$t('settings.fingerPrint')" @click.native="startSoterAuthentication('fingerPrint')" link></uni-list-item>
+			<uni-list-item v-if="supportMode.includes('fingerPrint')" :title="$t('settings.fingerPrint')" @click="startSoterAuthentication('fingerPrint')" link></uni-list-item>
 			<uni-list-item v-if="supportMode.includes('facial')" :title="$t('settings.facial')" @click="startSoterAuthentication('facial')" link></uni-list-item>
 		<!-- #endif -->
 			<uni-list-item v-if="i18nEnable" :title="$t('settings.changeLanguage')" @click="changeLanguage" :rightText="currentLanguage" link></uni-list-item>
 		</uni-list>
+		<uni-list class="mt10" :border="false" v-if="isAdmin">
+			<uni-list-item title="管理员面板" to="/pages/admin/index" link="navigateTo"></uni-list-item>
+		</uni-list>
 		
-		<!-- 退出/登录 按钮 -->
+		<!-- Logout Button -->
 		<view class="bottom-back" role="button" :aria-label="hasLogin ? $t('settings.logOut') : $t('settings.login')" @click="changeLoginState">
 			<text class="bottom-back-text" v-if="hasLogin">{{$t('settings.logOut')}}</text>
 			<text class="bottom-back-text" v-else>{{$t('settings.login')}}</text>
@@ -49,6 +52,10 @@
 			userInfo(){
 				return store.userInfo || {}
 			},
+			isAdmin(){
+				const roleList = this.userInfo.role || this.userInfo.roles || []
+				return Array.isArray(roleList) && roleList.includes('admin')
+			},
 			hasLogin(){
 				return store.hasLogin
 			},
@@ -57,7 +64,7 @@
 			}
 		},
 		onLoad() {
-			this.currentLanguage = uni.getStorageSync('CURRENT_LANG') == "en"?'English':'简体中文'
+			this.currentLanguage = uni.getStorageSync('CURRENT_LANG') === 'en' ? 'English' : '简体中文'
 			
 			uni.setNavigationBarTitle({
 				title: this.$t('settings.navigationBarTitle')
@@ -67,14 +74,12 @@
 				success: (res) => {
 					this.supportMode = res.supportMode
 				},
-				fail: (err) => {
-					console.log(err);
-				}
+				fail: () => undefined
 			})
 			// #endif
 		},
 		onShow() {
-			// 检查手机端获取推送是否开启
+			// Check push status on app side
 			//#ifdef APP-PLUS
 			setTimeout(()=>{
 				this.pushIsOn = pushServer.isOn();
@@ -87,37 +92,32 @@
 					await mutations.logout()
 				}else{
 					uni.redirectTo({
-						url: '/uni_modules/uni-id-pages/pages/login/login-withoutpwd',
+						url: '/pages/login/login',
 					});
 				}
 			},
 			/**
-			 * 开始生物认证
+			 * Start biometric authentication
 			 */
 			startSoterAuthentication(checkAuthMode) {
-				console.log(checkAuthMode);
-				let title = {"fingerPrint":this.$t('settings.fingerPrint'),"facial":this.$t('settings.facial')}[checkAuthMode]
-				// 检查是否开启认证
+				const title = {"fingerPrint":this.$t('settings.fingerPrint'),"facial":this.$t('settings.facial')}[checkAuthMode]
+				// Ensure biometric data is enrolled
 				this.checkIsSoterEnrolledInDevice({checkAuthMode,title})
 					.then(() => {
-						console.log(checkAuthMode,title);
-						// 开始认证
+						// Start authentication
 						uni.startSoterAuthentication({
 							requestAuthModes: [checkAuthMode],
-							challenge: '123456', // 微信端挑战因子
+							challenge: '123456', // WeChat challenge factor
 							authContent: this.$t('settings.please')+ " " + `${title}`,
-							complete: (res) => {
-								console.log(res);
-							},
+							complete: () => undefined,
 							success: (res) => {
-								console.log(res);
-								if (res.errCode == 0) {
+								if (res.errCode === 0) {
 									/**
-									 * 验证成功后开启自己的业务逻辑
-									 * 
-									 * app端以此为依据 验证成功
-									 * 
-									 * 微信小程序需要再次通过后台验证resultJSON与resultJSONSignature获取最终结果
+									 * Continue your own business flow after auth success.
+									 *
+									 * On App, this callback can be treated as success.
+									 *
+									 * On WeChat Mini Program, verify resultJSON/resultJSONSignature on server side.
 									 */
 									return uni.showToast({
 										title: `${title}`+this.$t('settings.successText'),
@@ -129,9 +129,7 @@
 									icon: 'none'
 								});
 							},
-							fail: (err) => {
-								console.log(err);
-								console.log(`认证失败:${err.errCode}`);
+							fail: (_err) => {
 								uni.showToast({
 									title:this.$t('settings.authFailed'),
 									// title: `认证失败`,
@@ -146,7 +144,6 @@
 					uni.checkIsSoterEnrolledInDevice({
 						checkAuthMode,
 						success: (res) => {
-							console.log(res);
 							if (res.isEnrolled) {
 								return resolve(res);
 							}
@@ -157,7 +154,6 @@
 							reject(res);
 						},
 						fail: (err) => {
-							console.log(err);
 							uni.showToast({
 								title: `${title}` + this.$t('settings.fail'),
 								icon: 'none'
@@ -173,23 +169,22 @@
 					mask: true
 				});
 				/*
-				任何临时存储或删除不直接影响程序运行逻辑（清除缓存必定造成业务逻辑的变化，如：打开页面的图片不从缓存中读取而从网络请求）的内容都可以视为缓存。主要有storage、和file写入。
-				缓存分为三部分		
-					原生层（如：webview、x5播放器的、第三方sdk的、地图组件等）
-					前端框架（重启就会自动清除）
-					开发者自己的逻辑（如：
-						本示例的 检测更新功能下载了apk安装包，
-						其他逻辑需要根据开发者自己的业务设计
-						比如：有聊天功能的应用，聊天记录是否视为缓存，还是单独提供清除聊天记录的功能由开发者自己设计
-					）
+				Temporary data that does not affect core business flow can be treated as cache.
+				Cache typically includes:	
+					Native layer (webview, media player, third-party SDK, map components, etc.)
+					Front-end framework layer (usually cleared after restart)
+					Business layer data (for example:)
+						APK package downloaded by update-check feature;
+						other cache policies should be designed per business needs;
+						chat history can be included or separated by product decision.
+					
 				*/
 				uni.getSavedFileList({
 					success:res=>{
 						if (res.fileList.length > 0) {
 							uni.removeSavedFile({
 								filePath: res.fileList[0].filePath,
-								complete:res=>{
-									console.log(res);
+								complete:()=>{
 									uni.hideLoading()
 									uni.showToast({
 										title: this.$t('settings.clearedSuccessed'),
@@ -205,21 +200,18 @@
 							});
 						}
 					},
-					complete:e=>{
-						console.log(e);
-					}
+					complete: () => undefined
 				});
 			},
 			changeLanguage(){
-				console.log('语言切换')
 				uni.showActionSheet({
-					itemList: ["English","简体中文"],
+					itemList: ['English', '简体中文'],
 					success: res => {
-						console.log(res.tapIndex); 
 						let language = uni.getStorageSync('CURRENT_LANG')
-						if(
-							!res.tapIndex && language=='zh-Hans' || res.tapIndex && language=='en'
-						){
+						const sameSelection =
+							(!res.tapIndex && language === 'zh-Hans') ||
+							(res.tapIndex && language === 'en');
+						if (sameSelection) {
 							const globalData = getApp().globalData
 							if (language === 'en') {
 								language = globalData.locale = 'zh-Hans'
@@ -228,7 +220,7 @@
 							}
 							uni.setStorageSync('CURRENT_LANG', language)
 							getApp().globalData.$i18n.locale = language
-							this.currentLanguage = res.tapIndex?'简体中文':'English'
+							this.currentLanguage = res.tapIndex ? '简体中文' : 'English'
 							if(uni.setLocale){
 								uni.setLocale(language)
 							}
@@ -240,8 +232,8 @@
 							})
 						}
 					},
-					fail: () => {},
-					complete: () => {}
+					fail: () => undefined,
+					complete: () => undefined
 				});
 			}
 		}

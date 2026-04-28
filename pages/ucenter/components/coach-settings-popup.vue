@@ -24,6 +24,15 @@
         <text class="edit-label">自我介绍</text>
         <textarea class="edit-textarea" v-model="form.intro" placeholder="介绍你的经验" maxlength="200" />
       </view>
+      <fit-state-panel
+        v-if="!form.skillsText && !form.intro"
+        class="form-state"
+        compact
+        scene="coach"
+        :kicker="$t('state.profile.coachSettingsEmpty.kicker')"
+        :title="$t('state.profile.coachSettingsEmpty.title')"
+        :description="$t('state.profile.coachSettingsEmpty.description')"
+      />
       <view class="edit-actions">
         <button class="btn-cancel" @click="close">取消</button>
         <button class="btn-submit" :loading="saving" @click="save">保存</button>
@@ -34,9 +43,13 @@
 
 <script>
 import apiService from '@/services/apiService.js'
+import FitStatePanel from '@/components/fit-state-panel.vue'
 
 export default {
   name: 'CoachSettingsPopup',
+  components: {
+    FitStatePanel,
+  },
   props: {
     settings: { type: Object, default: () => ({}) },
   },
@@ -140,6 +153,11 @@ export default {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 12rpx;
   padding: 16rpx;
+}
+.form-state {
+  margin-top: 18rpx;
+  padding-left: 0;
+  padding-right: 0;
 }
 .edit-actions {
   display: flex;

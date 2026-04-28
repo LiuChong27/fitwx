@@ -32,7 +32,7 @@
 	} = initVueI18n(messages)
 
 	export default {
-		name: "uni-load-state",
+		name: "UniLoadState",
 		computed: {
 			noData() {
 				return t('noData')
@@ -72,7 +72,7 @@
 			uni.onNetworkStatusChange(({
 				networkType
 			}) => {
-				if (this.networkType == 'none' && networkType != 'none') { //之前没网现在有了
+				if (this.networkType === 'none' && networkType !== 'none') { //之前没网现在有了
 					this.$emit('networkResume')
 				}
 				this.networkType = networkType;
@@ -92,20 +92,20 @@
 				}
 			},
 			openSettings() {
-				if (uni.getSystemInfoSync().platform == "ios") {
-					var UIApplication = plus.ios.import("UIApplication");
-					var application2 = UIApplication.sharedApplication();
-					var NSURL2 = plus.ios.import("NSURL");
-					var setting2 = NSURL2.URLWithString("App-prefs:root=General");
+				if (uni.getSystemInfoSync().platform === "ios") {
+					const UIApplication = plus.ios.import("UIApplication");
+					const application2 = UIApplication.sharedApplication();
+					const NSURL2 = plus.ios.import("NSURL");
+					const setting2 = NSURL2.URLWithString("App-prefs:root=General");
 					application2.openURL(setting2);
 					plus.ios.deleteObject(setting2);
 					plus.ios.deleteObject(NSURL2);
 					plus.ios.deleteObject(application2);
 				} else {
-					var Intent = plus.android.importClass("android.content.Intent");
-					var Settings = plus.android.importClass("android.provider.Settings");
-					var mainActivity = plus.android.runtimeMainActivity();
-					var intent = new Intent(Settings.ACTION_SETTINGS);
+					const Intent = plus.android.importClass("android.content.Intent");
+					const Settings = plus.android.importClass("android.provider.Settings");
+					const mainActivity = plus.android.runtimeMainActivity();
+					const intent = new Intent(Settings.ACTION_SETTINGS);
 					mainActivity.startActivity(intent);
 				}
 			}

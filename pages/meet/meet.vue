@@ -1,132 +1,188 @@
 <template>
   <view class="container">
-    <uni-nav-bar fixed :status-bar="true" title="约练" :border="false" backgroundColor="rgba(10,22,40,0.85)" color="#ffffff" class="glass-nav"></uni-nav-bar>
-    
-    <!-- 顶部选项卡 -->
-    <view class="tabs-container" role="tablist" aria-label="约练导航">
-      <uni-segmented-control :current="current" :values="items" @clickItem="onClickItem" styleType="text" activeColor="#00E5FF"></uni-segmented-control>
+    <view class="meet-top">
+      <view class="meet-top__ornaments" aria-hidden="true">
+        <view class="meet-top__glow meet-top__glow--left"></view>
+        <view class="meet-top__glow meet-top__glow--right"></view>
+        <view class="meet-top__spark-group">
+          <view class="meet-top__spark"></view>
+          <view class="meet-top__spark meet-top__spark--soft"></view>
+          <view class="meet-top__spark"></view>
+        </view>
+      </view>
+      <view class="meet-top__title-row">
+        <view class="meet-top__title-block">
+            <view class="meet-top__eyebrow">
+            <view class="meet-top__eyebrow-dot"></view>
+            <text class="meet-top__eyebrow-text">10公里内约练</text>
+          </view>
+        </view>
+        <view class="meet-top__status-pill">
+          <text class="meet-top__status-text">即时匹配</text>
+        </view>
+      </view>
+      <view class="meet-top__quick-actions">
+        <view class="top-inbox-btn" role="button" aria-label="打开私信" @click="openInboxPanel">
+          <view class="top-btn__icon-shell">
+            <uni-icons type="chatboxes-filled" size="20" color="#72E4C8"></uni-icons>
+          </view>
+          <text class="top-btn__label">私信</text>
+        </view>
+        <view class="top-publish-btn" role="button" aria-label="发布需求" @click="openPublish">
+          <view class="top-btn__icon-shell top-btn__icon-shell--dark">
+            <uni-icons type="plusempty" size="18" color="#08131D"></uni-icons>
+          </view>
+          <text class="top-publish-text">发布需求</text>
+        </view>
+      </view>
+      <view class="meet-notice" role="note">
+        <uni-icons type="info" size="15" color="#72E4C8"></uni-icons>
+        <text class="meet-notice__text">这个软件为18-28岁之间的青年设计，仅在学校和健身房附近可以使用约练，不要选择其他地点</text>
+      </view>
+      <view class="tabs-container" role="tablist" aria-label="约练导航">
+        <uni-segmented-control :current="current" :values="items" @clickItem="onClickItem" styleType="text" activeColor="#00E5FF"></uni-segmented-control>
+      </view>
     </view>
-
-    <!-- 内容区域 -->
     <view class="content">
       <view v-if="current === 0">
-        <!-- 找搭子内容 (发布的需求列表) -->
         <view class="filter-bar">
-           <!-- 筛选栏 -->
-           <picker mode="selector" :range="sortOptions" @change="onSortChange">
-             <view class="filter-item" role="button" aria-label="排序方式">
-               {{ currentSort }} <uni-icons type="arrowdown" size="14" color="rgba(255,255,255,0.8)"></uni-icons>
-             </view>
-           </picker>
-           <picker mode="selector" :range="sportOptions" @change="onSportFilterChange">
-             <view class="filter-item" role="button" aria-label="运动类型筛选">
-               {{ currentSportFilter }} <uni-icons type="arrowdown" size="14" color="rgba(255,255,255,0.8)"></uni-icons>
-             </view>
-           </picker>
+          <picker mode="selector" :range="sortOptions" @change="onSortChange">
+            <view class="filter-item" role="button" aria-label="排序方式">
+              {{ currentSort }} <uni-icons type="arrowdown" size="14" color="rgba(255,255,255,0.8)"></uni-icons>
+            </view>
+          </picker>
+          <picker mode="selector" :range="sportOptions" @change="onSportFilterChange">
+            <view class="filter-item" role="button" aria-label="运动类型筛选">
+              {{ currentSportFilter }} <uni-icons type="arrowdown" size="14" color="rgba(255,255,255,0.8)"></uni-icons>
+            </view>
+          </picker>
         </view>
-        
         <scroll-view scroll-y class="list-scroll" role="list" aria-label="需求列表">
-           <view class="needs-item" v-for="(item, index) in filteredNeedsList" :key="index" role="listitem" @click="openDetail(item)">
+          <view v-if="!hasLocation" class="meet-empty">
+            <text class="meet-empty__title">开启定位后查看10公里内约练</text>
+            <text class="meet-empty__desc">为了安全，仅展示你周围10公里内的约练需求。</text>
+            <button class="meet-empty__btn" @click="requestLocation">开启定位</button>
+          </view>
+          <view v-else-if="needsLoadError && !needsLoading" class="meet-empty">
+            <text class="meet-empty__title">约练需求暂时未拉取成功</text>
+            <text class="meet-empty__desc">{{ needsLoadError }}</text>
+            <button class="meet-empty__btn" @click="getNeedsList">重新加载</button>
+          </view>
+          <view v-else-if="needsLoading && !filteredNeedsList.length" class="meet-empty">
+            <text class="meet-empty__title">正在同步附近约练</text>
+            <text class="meet-empty__desc">正在查找10公里内学校和健身房附近的约练需求。</text>
+          </view>
+          <view v-else-if="!filteredNeedsList.length" class="meet-empty">
+            <text class="meet-empty__title">10公里内暂无约练</text>
+            <text class="meet-empty__desc">可以稍后刷新，或发布学校、健身房附近的约练需求。</text>
+          </view>
+          <block v-if="hasLocation && filteredNeedsList.length">
+            <view class="needs-item" v-for="(item, index) in filteredNeedsList" :key="item._id || item.id || index" role="listitem" @click="openDetail(item)">
               <view class="item-header">
-                  <image :src="item.avatar" class="avatar" mode="aspectFill"></image>
-                  <view class="user-info">
-                      <text class="name">{{item.nickname}}</text>
-                      <text class="time">{{item.time}}</text>
-                  </view>
-                  <view class="price-tag">{{item.feeType}}</view>
-				  <view class="op" v-if="hasLogin">
-					  <button v-if="item.isMine" class="op-btn" size="mini" @click.stop="openEditNeed(item)">编辑</button>
-					  <button v-if="item.isMine" class="op-btn danger" size="mini" @click.stop="deleteNeed(item)">删除</button>
-					  <button v-else class="op-btn" size="mini" @click.stop="startChat(item)">联系TA</button>
-				  </view>
+                <image :src="item.avatar" class="avatar" mode="aspectFill"></image>
+                <view class="user-info">
+                  <text class="name">{{item.nickname}}</text>
+                  <text class="time">{{item.time}}</text>
+                </view>
+                <view class="price-tag">{{item.feeType}}</view>
+                <view class="op" v-if="hasLogin">
+                  <button v-if="item.isMine" class="op-btn" size="mini" @click.stop="openEditNeed(item)">编辑</button>
+                  <button v-if="item.isMine" class="op-btn danger" size="mini" @click.stop="deleteNeed(item)">删除</button>
+                  <button v-else class="op-btn" size="mini" @click.stop="startChat(item)">联系TA</button>
+                </view>
               </view>
               <view class="item-body">
-                  <view class="tag-row">
-                      <view class="tag">#{{item.sport}}</view>
-                      <view class="tag date">{{item.date}}</view>
-                  </view>
-                  <text class="desc">{{item.desc}}</text>
-                  <view class="location-row">
-                      <uni-icons type="location-filled" size="16" color="rgba(255,255,255,0.6)"></uni-icons>
-                      <text class="location-text">{{item.location}} ({{item.distance}}km)</text>
-                  </view>
-              </view>
-           </view>
-        </scroll-view>
-      </view>
-      
-      <view v-if="current === 1">
-        <!-- 找教练内容 -->
-        <scroll-view scroll-y class="list-scroll">
-            <view class="coach-item" v-for="(coach, idx) in coachList" :key="idx" @click="openCoachDetail(coach)">
-                <image :src="coach.avatar" class="coach-avatar" mode="aspectFill"></image>
-                <view class="coach-info">
-                    <view class="coach-header">
-                        <text class="coach-name">{{coach.name}}</text>
-                        <text class="coach-score">⭐ {{coach.score}}</text>
-                    </view>
-                    <text class="coach-title">{{coach.title}}</text>
-                    <view class="coach-tags">
-                        <text v-for="(tag, tIdx) in coach.tags" :key="tIdx" class="c-tag">{{tag}}</text>
-                    </view>
+                <view class="tag-row">
+                  <view class="tag">#{{item.sport}}</view>
+                  <view class="tag date">{{item.date}}</view>
                 </view>
-                <button class="book-btn" size="mini" aria-label="预约教练" @click.stop="openBookPopup(coach)">预约</button>
+                <text class="desc">{{item.desc}}</text>
+                <view class="location-row">
+                  <uni-icons type="location-filled" size="16" color="rgba(255,255,255,0.6)"></uni-icons>
+                  <text class="location-text">{{item.location}} ({{ formatDistance(item.distance) }})</text>
+                </view>
+              </view>
             </view>
+          </block>
         </scroll-view>
       </view>
-
-            <view v-if="current === 2">
-                <inbox-tab ref="inboxTab" @open-chat="openInboxChat" />
+      <view v-if="current === 1">
+        <scroll-view scroll-y class="list-scroll">
+          <view v-if="coachLoadError && !coachLoading" class="meet-empty">
+            <text class="meet-empty__title">教练列表暂时未拉取成功</text>
+            <text class="meet-empty__desc">{{ coachLoadError }}</text>
+            <button class="meet-empty__btn" @click="getCoachList">重新加载</button>
+          </view>
+          <view v-else-if="coachLoading && !coachList.length" class="meet-empty">
+            <text class="meet-empty__title">正在同步教练信息</text>
+            <text class="meet-empty__desc">稍等片刻，马上为你展示可预约教练。</text>
+          </view>
+          <view v-else-if="!coachList.length" class="meet-empty">
+            <text class="meet-empty__title">暂无可预约教练</text>
+            <text class="meet-empty__desc">可以先在约练广场找搭子，或稍后再试。</text>
+          </view>
+          <view v-else class="coach-item" v-for="(coach, idx) in coachList" :key="coach._id || idx" @click="openCoachDetail(coach)">
+            <image :src="coach.avatar" class="coach-avatar" mode="aspectFill"></image>
+            <view class="coach-info">
+              <view class="coach-header">
+                <text class="coach-name">{{coach.name}}</text>
+                <text class="coach-score">★{{coach.score}}</text>
+              </view>
+              <text class="coach-title">{{coach.title}}</text>
+              <view class="coach-tags">
+                <text v-for="(tag, tIdx) in coach.tags" :key="tIdx" class="c-tag">{{tag}}</text>
+              </view>
             </view>
-
-
+            <button class="book-btn" size="mini" aria-label="预约教练" @click.stop="openBookPopup(coach)">预约</button>
+          </view>
+        </scroll-view>
+      </view>
     </view>
-    
-    <!-- 悬浮发布按钮 -->
-    <view class="fab-btn" role="button" aria-label="发布需求" @click="openPublish">
-        <uni-icons type="plusempty" size="30" color="#fff"></uni-icons>
-    </view>
-
-    <!-- 发布弹窗 -->
     <uni-popup ref="publishPopup" type="bottom" background-color="#132136">
-        <view class="popup-box">
-            <view class="popup-bar">
-				<text class="popup-title">{{ editingNeedId ? '编辑需求' : '发布需求' }}</text>
-                <uni-icons type="closeempty" size="24" color="rgba(255,255,255,0.6)" role="button" aria-label="关闭弹窗" @click="closePublish"></uni-icons>
-            </view>
-            <scroll-view scroll-y class="popup-scroll">
-                <publish-card ref="publishCard" @submit="onPublishSubmit" @chooseLocation="onChooseLocation"></publish-card>
-            </scroll-view>
+      <view class="popup-box">
+        <view class="popup-bar">
+          <text class="popup-title">{{ editingNeedId ? '编辑需求' : '发布需求' }}</text>
+          <uni-icons type="closeempty" size="24" color="rgba(255,255,255,0.6)" role="button" aria-label="关闭弹窗" @click="closePublish"></uni-icons>
         </view>
+        <scroll-view scroll-y class="popup-scroll">
+          <publish-card ref="publishCard" @submit="onPublishSubmit" @chooseLocation="onChooseLocation"></publish-card>
+        </scroll-view>
+      </view>
     </uni-popup>
-
-    <!-- 详情弹窗 (搭子) -->
     <need-detail-modal ref="detailModal" :item="currentItem" @edit="openEditNeed" @delete="deleteNeed" @chat="startChat" />
-
-    <!-- 预约弹窗 (教练) -->
     <book-coach-popup ref="bookPopupComp" :coach="currentCoach" @confirm="onBookConfirm" />
-
-
+    <uni-popup ref="inboxPopup" type="bottom" background-color="#132136" @change="onInboxPopupChange">
+      <view class="popup-box inbox-popup-box">
+        <view class="popup-bar">
+          <text class="popup-title">私信</text>
+          <uni-icons type="closeempty" size="24" color="rgba(255,255,255,0.6)" role="button" aria-label="关闭私信弹窗" @click="closeInboxPanel"></uni-icons>
+        </view>
+        <scroll-view scroll-y class="popup-scroll inbox-scroll">
+          <inbox-tab ref="inboxTab" @open-chat="openInboxChat" />
+        </scroll-view>
+      </view>
+    </uni-popup>
   </view>
 </template>
-
 <script>
 import PublishCard from './components/publish-card.vue';
 import NeedDetailModal from './components/need-detail-modal.vue';
 import BookCoachPopup from './components/book-coach-popup.vue';
 import InboxTab from './components/inbox-tab.vue';
 import { MEET_SPORT_FILTER_OPTIONS } from './meet.constants.js';
-import apiService from '@/services/apiService.js';
 import { callFunctionWithToken } from '@/services/cloudCall.js';
 import { checkLogin } from '@/common/auth.js';
-import chatService from '@/services/chatService.js';
 import { store } from '@/uni_modules/uni-id-pages/common/store.js';
+import { useUserStore } from '@/store/user.js';
+import storage from '@/common/storage.js';
 import tabCacheMixin from '@/common/tabCacheMixin.js';
+import networkResumeMixin from '@/common/networkResumeMixin.js';
 
-const TENCENT_MAP_KEY = 'IRKBZ-VLFLQ-RZQ5U-2Z7YA-KCPTZ-HFBVI';
+const TENCENT_MAP_KEY = import.meta.env?.VITE_TENCENT_MAP_KEY || '';
+const DEFAULT_AVATAR = '/static/tabbar/me.png';
 
 export default {
-  mixins: [tabCacheMixin],
+  mixins: [tabCacheMixin, networkResumeMixin],
   tabCacheKeys: ['current', 'rawNeedsList', 'coachList', 'currentSort', 'currentSportFilter'],
   components: {
     PublishCard,
@@ -137,11 +193,11 @@ export default {
   data() {
     return {
       current: 0,
-    items: ['找搭子', '找教练', '私信'],
+      items: ['找约练', '找教练'],
       sortOptions: ['离我最近', '最新发布'],
       currentSort: '离我最近',
-    sportOptions: MEET_SPORT_FILTER_OPTIONS,
-    currentSportFilter: MEET_SPORT_FILTER_OPTIONS[0],
+      sportOptions: MEET_SPORT_FILTER_OPTIONS,
+      currentSportFilter: MEET_SPORT_FILTER_OPTIONS[0],
       
       myLocation: {
           latitude: null,
@@ -156,17 +212,22 @@ export default {
 
       rawNeedsList: [],
       coachList: [],
-      publishing: false, // 防重复提交
-      _prevLoginState: false, // 登录态变化检测
-	  editingNeedId: '',
+      needsLoading: false,
+      needsLoadError: '',
+      coachLoading: false,
+      coachLoadError: '',
+      inboxPopupVisible: false,
+      publishing: false,
+      prevLoginState: false,
+      editingNeedId: '',
     };
   },
   computed: {
-      /** 从 store 获取当前用户信息（响应式） */
+      /** 从 store 获取当前用户信息 */
       userInfo() {
           return store.userInfo || {};
       },
-      /** 是否已登录（响应式） */
+      /** 是否已登录 */
       hasLogin() {
           return store.hasLogin;
       },
@@ -178,13 +239,18 @@ export default {
       /** 当前用户头像 */
       currentAvatar() {
           const u = this.userInfo;
-          return (u.avatar_file && u.avatar_file.url) || u.avatar || '';
+          return u.avatarUrl || (u.avatar_file && u.avatar_file.url) || u.avatar || '';
+      },
+      hasLocation() {
+          const lat = Number(this.myLocation.latitude);
+          const lng = Number(this.myLocation.longitude);
+          return Number.isFinite(lat) && Number.isFinite(lng);
       },
       filteredNeedsList() {
           let list = [...this.rawNeedsList];
           
           if (this.currentSportFilter !== '全部类型') {
-              list = list.filter(item => item.sport === this.currentSportFilter || (this.currentSportFilter === '球类' && item.sport.includes('球')));
+              list = list.filter(item => item.sport === this.currentSportFilter || (this.currentSportFilter === '球类' && item.sport && item.sport.includes('球')));
           }
           
           if (this.currentSort === '离我最近') {
@@ -200,18 +266,18 @@ export default {
       this.requestLocation();
 
       this.syncLoginCache();
-      this._prevLoginState = this.hasLogin;
+      this.prevLoginState = this.hasLogin;
 
-      // 监听登录成功事件（uni-id-pages 登录流程完成后触发）
+      // 监听登录成功事件
       uni.$on('uni-id-pages-login-success', () => {
-          this._prevLoginState = true;
+          this.prevLoginState = true;
           this.syncLoginCache();
           this.refreshData();
       });
 
       // 监听退出登录事件
       uni.$on('uni-id-pages-logout', () => {
-          this._prevLoginState = false;
+          this.prevLoginState = false;
           this.refreshData();
       });
   },
@@ -220,20 +286,19 @@ export default {
       uni.$off('uni-id-pages-logout');
   },
   onShow() {
-      // tabBar 页面每次显示时检测登录态变化
+      // tabBar 页面每次显示时同步登录状态
       this.syncLoginCache();
       const lastUpdated = Number(this.myLocation.updatedAt);
       if (!lastUpdated || Date.now() - lastUpdated > 5 * 60 * 1000) {
           this.requestLocation();
       }
       const nowLogin = this.hasLogin;
-      if (nowLogin !== this._prevLoginState) {
-          this._prevLoginState = nowLogin;
+      if (nowLogin !== this.prevLoginState) {
+          this.prevLoginState = nowLogin;
           this.refreshData();
       }
 
-      // 私信自动刷新（在私信 tab 时）
-      if (this.current === 2 && this.$refs.inboxTab) {
+      if (this.inboxPopupVisible && this.$refs.inboxTab) {
           this.$refs.inboxTab.refresh();
           this.$refs.inboxTab.startPolling();
       } else if (this.$refs.inboxTab) {
@@ -293,6 +358,9 @@ export default {
         });
     },
     loadTencentMapSdk() {
+        if (!TENCENT_MAP_KEY) {
+            return Promise.reject(new Error('腾讯地图 Key 未配置'));
+        }
         if (this._tencentMapPromise) return this._tencentMapPromise;
         this._tencentMapPromise = new Promise((resolve, reject) => {
             if (window.qq && window.qq.maps) {
@@ -303,7 +371,7 @@ export default {
             script.src = `https://map.qq.com/api/js?v=2.exp&key=${TENCENT_MAP_KEY}`;
             script.async = true;
             script.onload = () => resolve(window.qq);
-            script.onerror = () => reject(new Error('Tencent map sdk load failed'));
+            script.onerror = () => reject(new Error('腾讯地图 SDK 加载失败'));
             document.head.appendChild(script);
         });
         return this._tencentMapPromise;
@@ -340,7 +408,6 @@ export default {
      */
     syncLoginCache() {
         try {
-            const { useUserStore } = require('@/store/user.js');
             const userStore = useUserStore();
             userStore.syncFromLogin();
         } catch (e) {
@@ -369,13 +436,17 @@ export default {
             this.getNeedsList();
         } else if (this.current === 1) {
             this.getCoachList();
-        } else if (this.current === 2) {
-            this.$refs.inboxTab && this.$refs.inboxTab.refresh();
         }
+    },
+    onNetworkResume() {
+        this.refreshData();
+        // 网络恢复后补一次定位，避免距离排序偏差
+        this.requestLocation();
     },
 
     async getNeedsList() {
-        uni.showLoading({ title: '加载中...' });
+        this.needsLoading = true;
+        this.needsLoadError = '';
         try {
             const params = {
                 sportType: this.currentSportFilter
@@ -396,7 +467,7 @@ export default {
                 const mapped = res.result.data.map(item => ({
                     ...item,
                     nickname: item.nickname || '用户',
-                    avatar: item.avatar || 'https://via.placeholder.com/100',
+                    avatar: item.avatar || DEFAULT_AVATAR,
                     sport: item.sport_type,
                     feeType: item.fee_type,
                     desc: item.desc,
@@ -409,14 +480,16 @@ export default {
             }
         } catch (e) {
             console.error(e);
+            this.needsLoadError = '约练需求加载失败，请稍后重试';
             uni.showToast({ title: '加载失败', icon: 'none' });
         } finally {
-            uni.hideLoading();
+            this.needsLoading = false;
         }
     },
 
     async getCoachList() {
-        uni.showLoading({ title: '加载中...' });
+        this.coachLoading = true;
+        this.coachLoadError = '';
         try {
             const res = await callFunctionWithToken({
                 name: 'fit-meet-api',
@@ -426,17 +499,20 @@ export default {
                 }
             });
             if (res.result.code === 0) {
-                this.coachList = res.result.data;
+                this.coachList = (res.result.data || []).map(coach => ({
+                    ...coach,
+                    avatar: coach.avatar || DEFAULT_AVATAR,
+                }));
             }
         } catch (e) {
             console.error(e);
+            this.coachLoadError = '教练列表加载失败，请检查网络后重试。';
             uni.showToast({ title: '加载失败', icon: 'none' });
         } finally {
-            uni.hideLoading();
+            this.coachLoading = false;
         }
     },
     
-    // 简单的时间格式化
     formatTime(timestamp) {
         if (!timestamp) return '';
         const date = new Date(timestamp);
@@ -446,17 +522,24 @@ export default {
         if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
         return (date.getMonth() + 1) + '月' + date.getDate() + '日';
     },
+    formatDistance(distance) {
+        const value = Number(distance);
+        if (!Number.isFinite(value)) return '距离未知';
+        if (value < 0.1) return '100m内';
+        if (value < 1) return `${Math.round(value * 1000)}m`;
+        return `${value.toFixed(1)}km`;
+    },
 
-    // 筛选排序逻辑
+    // 筛选与排序逻辑
     onSortChange(e) {
         this.currentSort = this.sortOptions[e.detail.value];
     },
     onSportFilterChange(e) {
         this.currentSportFilter = this.sportOptions[e.detail.value];
-        this.getNeedsList(); // 重新请求后端筛选
+        this.getNeedsList();
     },
 
-    // 详情逻辑
+    // 详情交互
     openDetail(item) {
         this.currentItem = item;
         this.$refs.detailModal.open();
@@ -486,13 +569,29 @@ export default {
         // Delegated to InboxTab component
         this.$refs.inboxTab && this.$refs.inboxTab.refresh();
     },
+    openInboxPanel() {
+        if (!this.requireLogin('查看私信')) return;
+        this.$refs.inboxPopup && this.$refs.inboxPopup.open();
+    },
+    closeInboxPanel() {
+        this.$refs.inboxPopup && this.$refs.inboxPopup.close();
+    },
+    onInboxPopupChange(e) {
+        const opened = e && e.show;
+        this.inboxPopupVisible = !!opened;
+        if (opened && this.$refs.inboxTab) {
+            this.$refs.inboxTab.refresh();
+            this.$refs.inboxTab.startPolling();
+        } else if (this.$refs.inboxTab) {
+            this.$refs.inboxTab.stopPolling();
+        }
+    },
 
     openInboxChat(conv) {
         if (!conv || !conv.targetUserId) return;
         if (!this.requireLogin('发私信')) return;
         try {
-            const storageModule = require('@/common/storage.js');
-            storageModule.default.set(`user_${conv.targetUserId}`, {
+            storage.set(`user_${conv.targetUserId}`, {
                 userId: conv.targetUserId,
                 nickname: conv.nickname,
                 avatar: conv.avatar,
@@ -501,13 +600,27 @@ export default {
 
         const url = `/pages/chat/chat?conversationId=${conv.conversationId}&userId=${conv.targetUserId}&nickname=${encodeURIComponent(conv.nickname || '')}`;
         uni.navigateTo({ url });
+        this.closeInboxPanel();
     },
     
-    // 教练详情与预约
     openCoachDetail(coach) {
-        uni.showToast({ title: '查看教练详情: ' + coach.name, icon: 'none' });
+        const coachUserId = coach.uid || coach.userId || coach.user_id || coach._id || '';
+        if (!coachUserId) {
+            uni.showToast({ title: '教练信息缺失', icon: 'none' });
+            return;
+        }
+        try {
+            storage.set(`user_${coachUserId}`, {
+                userId: coachUserId,
+                nickname: coach.name || coach.nickname || '教练',
+                avatar: coach.avatar || DEFAULT_AVATAR,
+            });
+        } catch (_) { /* ignore */ }
+        uni.navigateTo({
+            url: `/pages/profile/profile?userId=${encodeURIComponent(coachUserId)}`
+        });
     },
-    /** 登录守卫：统一的未登录引导 */
+    /** 登录守卫：统一未登录引导 */
     requireLogin(actionName) {
         if (this.hasLogin) return true;
         uni.showModal({
@@ -633,7 +746,7 @@ export default {
     
     async onPublishSubmit(form) {
         checkLogin(async () => {
-            if (this.publishing) return; // 防重复提交
+            if (this.publishing) return;
             this.publishing = true;
 
             const feeNum = Number(form.fee);
@@ -656,12 +769,6 @@ export default {
                         coordinates: [form.longitude, form.latitude]
                     } : null,
                 };
-                const { useUserStore } = require('@/store/user.js');
-                const userStore = useUserStore();
-                const uid = this.userInfo._id || userStore.userId;
-                if (uid) {
-                    params.uid = uid;
-                }
                 if (this.editingNeedId) params.needId = this.editingNeedId;
 
                 const res = await callFunctionWithToken({
@@ -713,21 +820,19 @@ export default {
             fail: (err) => {
                 console.error('Choose location failed:', err);
                 const errMsg = err.errMsg || '';
-                // 常见错误提示优化
-                if (errMsg.includes('cancel')) return; // 用户取消不提示
-                
+                if (errMsg.includes('cancel')) return;
                 let content = '无法打开地图选择。';
                 // #ifdef H5
                 if (errMsg.includes('key')) {
-                    content += '请检查 manifest.json 中 H5 地图配置的 Key 是否正确，以及 Key 是否开启了 Web端(JSAPI) 权限。';
+                    content += '请检查 manifest.json 中 H5 地图配置的 Key 是否正确，并确认已开启 JSAPI 权限。';
                 } else if (errMsg.includes('referer') || errMsg.includes('security')) {
-                     content += '请检查 Key 的安全域名设置是否包含当前域名。';
+                     content += '请检查 Key 的安全域名配置是否包含当前域名。';
                 }
                 // #endif
                 
                 uni.showModal({
                     title: '地图错误',
-                    content: content + '\n详细信息: ' + errMsg,
+                    content: `${content}\n详细信息: ${errMsg}`,
                     showCancel: false
                 });
             }
@@ -746,24 +851,276 @@ export default {
   min-height: 100vh;
   background-color: $neu-dark-bg;
   color: #ffffff;
-  /* 适配底部安全区 */
+  padding-top: calc(28rpx + env(safe-area-inset-top));
   padding-bottom: calc(30rpx + constant(safe-area-inset-bottom));
   padding-bottom: calc(30rpx + env(safe-area-inset-bottom));
 }
 
-.tabs-container {
-    padding: 20rpx;
+.meet-top {
     position: sticky;
-    top: 44px;
-    z-index: 10;
-    background-color: rgba(10, 22, 40, 0.88);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1rpx solid rgba(255,255,255,0.04);
+    top: 0;
+    z-index: 20;
+    overflow: hidden;
+    padding: 18rpx 20rpx;
+    background:
+        radial-gradient(circle at top right, rgba(114, 228, 200, 0.16), transparent 34%),
+        linear-gradient(180deg, rgba(8, 19, 29, 0.98), rgba(8, 19, 29, 0.92));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1rpx solid rgba(255,255,255,0.06);
+}
+
+.meet-top__ornaments {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 120rpx;
+    pointer-events: none;
+}
+
+.meet-top__glow {
+    position: absolute;
+    border-radius: 999rpx;
+    filter: blur(22rpx);
+    opacity: 0.9;
+}
+
+.meet-top__glow--left {
+    top: 18rpx;
+    left: 160rpx;
+    width: 120rpx;
+    height: 26rpx;
+    background: rgba(0, 229, 255, 0.2);
+}
+
+.meet-top__glow--right {
+    top: 10rpx;
+    right: 6rpx;
+    width: 168rpx;
+    height: 78rpx;
+    background: rgba(114, 228, 200, 0.16);
+}
+
+.meet-top__spark-group {
+    position: absolute;
+    top: 18rpx;
+    right: 34rpx;
+    display: flex;
+    gap: 10rpx;
+    align-items: center;
+}
+
+.meet-top__spark {
+    width: 8rpx;
+    height: 8rpx;
+    border-radius: 50%;
+    background: rgba(114, 228, 200, 0.92);
+    box-shadow: 0 0 10rpx rgba(114, 228, 200, 0.65);
+}
+
+.meet-top__spark--soft {
+    width: 12rpx;
+    height: 12rpx;
+    background: rgba(255,255,255,0.72);
+    box-shadow: 0 0 14rpx rgba(255,255,255,0.4);
+}
+
+.meet-top__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18rpx;
+    position: relative;
+    z-index: 1;
+}
+
+.meet-top__title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10rpx;
+}
+
+.meet-top__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+}
+
+.meet-top__eyebrow-dot {
+    width: 10rpx;
+    height: 10rpx;
+    border-radius: 50%;
+    background: #72E4C8;
+    box-shadow: 0 0 12rpx rgba(114, 228, 200, 0.55);
+}
+
+.meet-top__eyebrow-text {
+    font-size: 22rpx;
+    color: rgba(255,255,255,0.62);
+    letter-spacing: 2rpx;
+}
+
+.meet-top__title {
+    font-size: 40rpx;
+    line-height: 1;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 10rpx 24rpx rgba(0,0,0,0.24);
+}
+
+.meet-top__status-pill {
+    min-width: 126rpx;
+    height: 52rpx;
+    padding: 0 18rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999rpx;
+    background: rgba(255,255,255,0.05);
+    border: 1rpx solid rgba(255,255,255,0.08);
+    box-shadow: inset 0 1rpx 0 rgba(255,255,255,0.06);
+}
+
+.meet-top__status-text {
+    font-size: 22rpx;
+    color: rgba(255,255,255,0.72);
+    font-weight: 600;
+}
+
+.meet-top__quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+    margin-bottom: 14rpx;
+    position: relative;
+    z-index: 1;
+}
+
+.top-inbox-btn,
+.top-publish-btn {
+    min-height: 84rpx;
+    border-radius: 24rpx;
+    display: flex;
+    align-items: center;
+    gap: 14rpx;
+    padding: 0 22rpx;
+}
+
+.top-inbox-btn {
+    flex: 0.92;
+    background: rgba(114, 228, 200, 0.08);
+    border: 1rpx solid rgba(114, 228, 200, 0.22);
+    box-shadow: inset 0 1rpx 0 rgba(255,255,255,0.08);
+}
+
+.top-publish-btn {
+    flex: 1.18;
+    background: linear-gradient(135deg, #72E4C8, #8CEFD8);
+    box-shadow: 0 10rpx 24rpx rgba(114, 228, 200, 0.22);
+}
+
+.top-btn__icon-shell {
+    width: 52rpx;
+    height: 52rpx;
+    flex-shrink: 0;
+    border-radius: 16rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.06);
+}
+
+.top-btn__icon-shell--dark {
+    background: rgba(8, 19, 29, 0.12);
+}
+
+.top-btn__label,
+.top-publish-text {
+    font-size: 28rpx;
+    font-weight: 700;
+}
+
+.top-btn__label {
+    color: #EAFBF5;
+}
+
+.top-publish-text {
+    color: #08131D;
+}
+
+.meet-notice {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 10rpx;
+    padding: 14rpx 16rpx;
+    margin-bottom: 14rpx;
+    border-radius: 18rpx;
+    background: rgba(114, 228, 200, 0.08);
+    border: 1rpx solid rgba(114, 228, 200, 0.16);
+}
+
+.meet-notice__text {
+    flex: 1;
+    min-width: 0;
+    font-size: 22rpx;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.76);
+}
+
+.tabs-container {
+    padding: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .content {
-    padding: 20rpx;
+    padding: 24rpx 20rpx 20rpx;
+    min-height: calc(100vh - 280rpx);
+}
+
+.list-scroll {
+    max-height: calc(100vh - 400rpx);
+}
+
+.meet-empty {
+    @include fit-surface-card(44rpx 28rpx, 26rpx);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16rpx;
+    text-align: center;
+}
+
+.meet-empty__title {
+    font-size: 30rpx;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.meet-empty__desc {
+    max-width: 560rpx;
+    font-size: 24rpx;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.56);
+}
+
+.meet-empty__btn {
+    margin-top: 8rpx;
+    min-width: 220rpx;
+    height: 72rpx;
+    line-height: 72rpx;
+    border-radius: 999rpx;
+    border: none;
+    padding: 0 30rpx;
+    background: linear-gradient(135deg, #72E4C8, #8CEFD8);
+    color: #08131D;
+    font-size: 24rpx;
+    font-weight: 700;
+}
+
+.meet-empty__btn::after {
+    border: none;
 }
 
 /* 筛选栏 */
@@ -800,7 +1157,7 @@ export default {
     from { opacity: 0; transform: translateY(16rpx); }
     to   { opacity: 1; transform: translateY(0); }
 }
-/* 卡片交错动画延迟 */
+/* 卡片交错动效延迟 */
 .needs-item:nth-child(1) { animation-delay: 0s; }
 .needs-item:nth-child(2) { animation-delay: 0.06s; }
 .needs-item:nth-child(3) { animation-delay: 0.12s; }
@@ -975,34 +1332,6 @@ export default {
     border-radius: 32rpx;
 }
 
-/* 悬浮按钮 */
-.fab-btn {
-    position: fixed;
-    right: 40rpx;
-    bottom: 150rpx;
-    width: 112rpx;
-    height: 112rpx;
-    background: $sl-gradient-primary;
-    box-shadow: 0 8rpx 32rpx rgba(0, 229, 255, 0.35);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    border: none;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fabBreath 3s ease-in-out infinite;
-    
-    &:active {
-      transform: scale(0.9) rotate(90deg);
-      box-shadow: 0 4rpx 16rpx rgba(0, 229, 255, 0.25);
-    }
-}
-@keyframes fabBreath {
-    0%, 100% { box-shadow: 0 8rpx 32rpx rgba(0, 229, 255, 0.3); }
-    50%      { box-shadow: 0 8rpx 48rpx rgba(0, 229, 255, 0.5); }
-}
-
 /* 底部弹窗样式 */
 .popup-box {
     background-color: $sl-card-bg-solid;
@@ -1030,6 +1359,14 @@ export default {
     font-size: 34rpx;
     font-weight: 600;
     color: #ffffff;
+}
+
+.inbox-popup-box {
+    height: 72vh;
+}
+
+.inbox-scroll {
+    max-height: calc(72vh - 100rpx);
 }
 
 /* 详情弹窗样式 */

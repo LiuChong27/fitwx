@@ -4,12 +4,33 @@
     <scroll-view scroll-y class="list-scroll">
       <view class="inbox-header">
         <text class="section-title">最近私信</text>
-        <button class="refresh-btn" size="mini" @click="refresh" :loading="loading">刷新</button>
+        <button class="refresh-btn" size="mini" :loading="loading" @click="refresh">刷新</button>
       </view>
 
-      <view v-if="!loading && list.length === 0" class="empty-hint">
-        <text>还没有私信，去和附近的伙伴聊聊吧～</text>
-      </view>
+      <fit-state-panel
+        v-if="loadError && !loading && list.length === 0"
+        class="empty-hint"
+        compact
+        tone="error"
+        scene="inbox"
+        :kicker="$t('state.meet.inboxError.kicker')"
+        :title="$t('state.meet.inboxError.title')"
+        :description="loadError"
+        :action-text="$t('state.generic.retry')"
+        @action="refresh"
+      />
+
+      <fit-state-panel
+        v-else-if="!loading && list.length === 0"
+        class="empty-hint"
+        compact
+        scene="inbox"
+        :kicker="$t('state.meet.inboxEmpty.kicker')"
+        :title="$t('state.meet.inboxEmpty.title')"
+        :description="$t('state.meet.inboxEmpty.description')"
+      />
+
+      <fit-shimmer-stack v-else-if="loading && !list.length" variant="notification" :count="3" />
 
       <view
         v-for="conv in list"
@@ -35,24 +56,37 @@
 
 <script>
 import chatService from '@/services/chatService.js'
-import { throttle } from '@/common/utils.js'
+import FitShimmerStack from '@/components/fit-shimmer-stack.vue'
+import FitStatePanel from '@/components/fit-state-panel.vue'
+
+const INBOX_POLL_BASE_MS = 20000
+const INBOX_POLL_MAX_MS = 60000
 
 export default {
   name: 'InboxTab',
+  components: {
+    FitShimmerStack,
+    FitStatePanel,
+  },
   emits: ['open-chat'],
   data() {
     return {
       list: [],
       loading: false,
+      loadError: '',
       lastSync: 0,
-      _pollTimer: null,
+      pollTimer: null,
+      pollDelayMs: INBOX_POLL_BASE_MS,
     }
+  },
+  beforeUnmount() {
+    this.stopPolling()
   },
   methods: {
     async refresh(force = true) {
       const now = Date.now()
       if (!force && this.loading) return
-      if (!force && now - this.lastSync < 3000) return
+      if (!force && now - this.lastSync < 10000) return false
 
       this.loading = true
       try {
@@ -62,9 +96,15 @@ export default {
           ...item,
           time: this._formatTime(item.lastMessageDate),
         }))
+        this.loadError = ''
+        return true
       } catch (e) {
         console.error('[inbox] loadInbox failed:', e)
-        uni.showToast({ title: '私信加载失败', icon: 'none' })
+        this.loadError = '私信加载失败，请稍后重试。'
+        if (force) {
+          uni.showToast({ title: '私信加载失败', icon: 'none' })
+        }
+        return false
       } finally {
         this.loading = false
       }
@@ -72,15 +112,25 @@ export default {
 
     startPolling() {
       this.stopPolling()
-      this._pollTimer = setInterval(() => {
-        this.refresh(false)
-      }, 7000)
+      this.pollDelayMs = INBOX_POLL_BASE_MS
+      this.scheduleNextPoll(0)
+    },
+
+    scheduleNextPoll(delay = this.pollDelayMs) {
+      this.stopPolling()
+      this.pollTimer = setTimeout(async () => {
+        const ok = await this.refresh(false)
+        this.pollDelayMs = ok
+          ? INBOX_POLL_BASE_MS
+          : Math.min(INBOX_POLL_MAX_MS, this.pollDelayMs + 10000)
+        this.scheduleNextPoll(this.pollDelayMs)
+      }, Math.max(0, delay))
     },
 
     stopPolling() {
-      if (this._pollTimer) {
-        clearInterval(this._pollTimer)
-        this._pollTimer = null
+      if (this.pollTimer) {
+        clearTimeout(this.pollTimer)
+        this.pollTimer = null
       }
     },
 
@@ -93,10 +143,6 @@ export default {
       if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
       return (date.getMonth() + 1) + '月' + date.getDate() + '日'
     },
-  },
-
-  beforeUnmount() {
-    this.stopPolling()
   },
 }
 </script>
@@ -120,15 +166,13 @@ export default {
   color: #ffffff;
 }
 .refresh-btn {
-  @include neu-btn;
+  @include fit-pill-button('ghost', 56rpx, 28rpx);
   padding: 0 24rpx;
-  height: 56rpx;
-  line-height: 56rpx;
   font-size: 24rpx;
-  color: #00e5ff;
+  color: #72E4C8;
 }
 .conv-item {
-  @include sl-card;
+  @include fit-surface-card(24rpx, 28rpx);
   padding: 24rpx;
   margin-bottom: 20rpx;
   display: flex;
@@ -136,7 +180,7 @@ export default {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
   &:active {
     transform: scale(0.985);
-    border-color: rgba(0, 229, 255, 0.12);
+    border-color: rgba(114, 228, 200, 0.16);
   }
 }
 .conv-avatar {
@@ -144,7 +188,7 @@ export default {
   height: 92rpx;
   border-radius: 50%;
   margin-right: 20rpx;
-  border: 1px solid rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(114, 228, 200, 0.12);
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
 }
 .conv-body {
@@ -193,10 +237,6 @@ export default {
   to { opacity: 1; transform: scale(1); }
 }
 .empty-hint {
-  @include sl-card;
-  padding: 40rpx;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 26rpx;
+  padding-top: 24rpx;
 }
 </style>

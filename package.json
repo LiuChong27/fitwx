@@ -77,7 +77,7 @@
             "baidu": "-",
             "kuaishou": "-",
             "jd": "-",
-            "harmony": "-",
+            "harmony": "√",
             "qq": "-",
             "lark": "-"
           },
@@ -103,31 +103,23 @@
       }
     }
   },
-  "dependencies": {
-    "qrcodejs2": "^0.0.2"
-  },
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint --ext .js,.vue .",
-    "lint:fix": "eslint --ext .js,.vue . --fix",
-    "format": "prettier --write \"**/*.{js,vue,json,css,scss,md}\"",
-    "format:check": "prettier --check \"**/*.{js,vue,json,css,scss,md}\"",
-    "build:h5": "npx uni build --platform h5",
-    "build:mp-weixin": "npx uni build --platform mp-weixin",
-    "prepare": "husky install"
-  },
-  "lint-staged": {
-    "*.{js,vue}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,css,scss,md}": [
-      "prettier --write"
-    ]
+    "lint": "npm run lint:prod && npm run lint:test",
+    "lint:prod": "eslint . --ext .js,.vue --ignore-pattern tests/** --max-warnings 0",
+    "lint:test": "eslint tests --ext .js --max-warnings 0",
+    "lint:fix": "eslint . --ext .js,.vue --fix",
+    "build:h5": "cross-env UNI_INPUT_DIR=. uni build --platform h5",
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. uni build --platform mp-weixin",
+    "build:mp-harmony": "cross-env UNI_INPUT_DIR=. uni build --platform mp-harmony",
+    "build:app-harmony": "cross-env UNI_INPUT_DIR=. uni build --platform app-harmony"
   },
   "devDependencies": {
+    "@dcloudio/uni-app": "^3.0.0-5000520260324002",
+    "@dcloudio/uni-components": "^3.0.0-5000520260324002",
+    "@dcloudio/uni-h5": "^3.0.0-5000520260324002",
+    "@dcloudio/uni-mp-weixin": "^3.0.0-5000520260324002",
+    "@dcloudio/vite-plugin-uni": "^3.0.0-5000520260324002",
+    "cross-env": "^10.1.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vue": "^9.31.0",
@@ -135,6 +127,11 @@
     "lint-staged": "^15.4.3",
     "pinia": "^3.0.4",
     "prettier": "^3.4.2",
+    "sass": "^1.98.0",
     "vitest": "~3.1.4"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vue-i18n": "^9.1.9"
   }
 }

@@ -144,10 +144,160 @@ export default {
 	invite: {
 		download: "Download",
 	},
-	login: {
+	loginLegacy: {
 		phoneLogin: "After logging in, you can show yourself",
 		phoneLoginTip: "Unregistered mobile phone numbers will be automatically registered after verification",
 		getVerifyCode: "Get Code",
+		page: {
+			brandKicker: 'Training Community',
+			brandSlogan: 'Meet better workout partners',
+			loading: 'Signing in...',
+			success: 'Signed in',
+			loginFailedTitle: 'Sign-in issue',
+			busyTitle: 'Service busy',
+			busyContent: 'Database resources are at capacity. Please try again later or contact the administrator to upgrade the cloud service.',
+			whitelistBlockedContent: 'The request was blocked by the WeChat domain allowlist. Add this request domain in WeChat Official Account Platform > Development > Server Domains, then retry with domain checks disabled in the developer tool.{debugInfo}',
+			whitelistDebugPrefix: '\n\nDebug URL: {url}',
+			whitelistDebugFallback: '\n\nDebug URL: could not be parsed from the error. Check the full console output. If you are running the WeChat mini program through HBuilderX, make sure uniCloud mp-weixin launchtype is set to remote to avoid local debug routing.',
+			weixinAuthorizeFailed: 'WeChat authorization failed. Please retry on a real device or use another sign-in method.',
+			genericRetry: 'Please try again later',
+			unsupportedCountry: 'Other regions are not supported yet',
+			withoutPwd: {
+				weixinPrimary: 'Authorize with WeChat',
+				weixinSecondary: 'Use basic WeChat auth only',
+				weixinTip: 'Phone-based WeChat sign-in is recommended. New accounts will be created automatically.',
+				quickLoginTip: 'Authorize to continue matching partners, chatting, and tracking workouts',
+				weixinMobileButton: 'Authorize phone and continue',
+				smsEntryTip: 'Enter your phone number to get a code and continue',
+				smsEntryButton: 'Get SMS code',
+				phonePlaceholder: 'Enter phone number',
+				invalidPhone: 'Enter a valid phone number',
+				cancelPhoneAuth: 'Phone authorization was cancelled',
+				missingPhoneAuth: 'Phone authorization was not received. Please try again.',
+				missingWxCode: 'Could not fetch a login code from WeChat. Please try again.'
+			},
+			pwd: {
+				title: 'Password sign in',
+				tip: 'For existing accounts, enter your phone number, username, or email with your password to continue.',
+				usernamePlaceholder: 'Enter phone / username / email',
+				passwordPlaceholder: 'Enter password',
+				button: 'Sign in and continue',
+				forgetHint: 'Forgot password?',
+				retrieve: 'Recover password',
+				register: 'Create account',
+				adminRegister: 'Create admin account',
+				passwordRequired: 'Enter your password',
+				accountRequired: 'Enter your phone number, username, or email',
+				captchaRequired: 'Enter the captcha code'
+			},
+			sms: {
+				title: 'Enter verification code',
+				tip: 'A verification code was sent to {phone}. Enter it to finish signing in.',
+				button: 'Verify and sign in',
+				codeRequired: 'Enter the 6-digit verification code'
+			},
+			password: {
+				noPwd: 'Enter password',
+				noRePwd: 'Enter the password again',
+				rePwdErr: 'The two passwords do not match',
+				strength: {
+					super: 'Password must include uppercase, lowercase, numbers, and symbols, with a length of 8-16 characters',
+					strong: 'Password must include letters, numbers, and symbols, with a length of 8-16 characters',
+					medium: 'Password must contain any two of letters, numbers, and symbols, with a length of 8-16 characters',
+					weak: 'Password must include letters and numbers, with a length of 6-16 characters'
+				}
+			},
+			register: {
+				common: {
+					usernamePlaceholder: 'Enter username',
+					nicknamePlaceholder: 'Enter nickname',
+					passwordPlaceholder: 'Enter a {min}-16 character password',
+					passwordAgainPlaceholder: 'Enter the password again',
+					back: 'Back',
+					toLogin: 'Already have an account? Sign in'
+				},
+				username: {
+					title: 'Create account',
+					tip: 'Create your account to continue matching partners, chatting, and tracking workouts',
+					button: 'Register and continue',
+					emailSwitch: 'Use email verification to register'
+				},
+				email: {
+					title: 'Register with email',
+					tip: 'Finish registration with an email code, then sign in right away',
+					emailPlaceholder: 'Enter email',
+					button: 'Complete registration',
+					usernameSwitch: 'Use username and password instead',
+					success: 'Registration complete. Please sign in.'
+				},
+				admin: {
+					title: 'Create super admin',
+					tip: 'Use this to initialize the admin account and keep the credentials safe',
+					button: 'Create admin',
+					success: 'Admin account created'
+				},
+				rules: {
+					usernameRequired: 'Enter username',
+					usernameLength: 'Username must be between {minLength} and {maxLength} characters',
+					usernameNoPhoneOrEmail: 'Username cannot be a phone number or email',
+					usernameNoNumber: 'Username cannot be all numbers',
+					usernameNoChinese: 'Username cannot contain Chinese characters',
+					usernameLabel: 'Username',
+					nicknameLength: 'Nickname must be between {minLength} and {maxLength} characters',
+					nicknameNoPhoneOrEmail: 'Nickname cannot be a phone number or email',
+					nicknameNoNumber: 'Nickname cannot be all numbers',
+					nicknameNoChinese: 'Nickname cannot contain Chinese characters',
+					nicknameLabel: 'Nickname',
+					emailRequired: 'Enter email',
+					emailInvalid: 'Enter a valid email address',
+					emailCodeRequired: 'Enter the email verification code',
+					emailCodeInvalid: 'Enter a valid email verification code'
+				}
+			},
+			retrieve: {
+				common: {
+					newPasswordPlaceholder: 'Enter new password',
+					passwordAgainPlaceholder: 'Enter the new password again',
+					backLogin: 'Back to sign in',
+					success: 'Password reset complete. Please sign in again.'
+				},
+				sms: {
+					title: 'Reset password by SMS',
+					tip: 'Verify the SMS code to reset your password',
+					phonePlaceholder: 'Enter phone number',
+					button: 'Reset password',
+					emailSwitch: 'Reset by email verification code',
+					phoneRequired: 'Enter phone number',
+					phoneInvalid: 'Enter a valid phone number',
+					smsCodeRequired: 'Enter the SMS verification code',
+					smsCodeInvalid: 'Enter the 6-digit verification code',
+					passwordRequired: 'Enter the new password',
+					passwordConfirmRequired: 'Confirm the password'
+				},
+				email: {
+					title: 'Reset password by email',
+					tip: 'Verify the email code to reset your password',
+					emailPlaceholder: 'Enter email',
+					button: 'Reset password',
+					smsSwitch: 'Reset by SMS verification code',
+					emailRequired: 'Enter email',
+					emailInvalid: 'Enter a valid email address',
+					emailCodeRequired: 'Enter the email verification code',
+					emailCodeInvalid: 'Enter the 6-digit verification code'
+				}
+			},
+			bindMobile: {
+				title: 'Bind phone number',
+				tip: 'Bind your phone number to sign in with it and unlock the full experience',
+				mobilePlaceholder: 'Enter phone number',
+				button: 'Bind and continue',
+				loading: 'Binding...',
+				success: 'Phone number linked',
+				phoneInvalid: 'Enter a valid phone number',
+				codeInvalid: 'Enter a valid verification code',
+				failed: 'Binding failed. Please try again later.'
+			}
+		}
 	},
 	uniQuickLogin: {
 		accountLogin: "Account",
@@ -279,5 +429,374 @@ export default {
 		systemMsg: 'System',
 		noNotification: 'No notifications',
 		markRead: 'Mark as read',
+	},
+	state: {
+		sceneTags: {
+			default: 'State',
+			discover: 'Content',
+			meet: 'Matching',
+			coach: 'Coach Pool',
+			inbox: 'Inbox',
+			chat: 'New Chat',
+			income: 'Ledger',
+			members: 'Roster',
+			profile: 'Image Slot',
+			error: 'Issue',
+		},
+		generic: {
+			emptyTitle: 'Nothing here yet',
+			retry: 'Retry',
+			postFeed: 'Post Update',
+			loginToPost: 'Sign in to post',
+			goMeet: 'Go to Meet',
+			mapPick: 'Pick on Map',
+			uploadAvatar: 'Upload Avatar',
+		},
+		chat: {
+			empty: {
+				kicker: 'New Chat',
+				title: 'Start with a hello',
+				description: 'Be clear about your time, place, and goal to get a better response.',
+			},
+		},
+		notification: {
+			error: {
+				kicker: 'Sync Status',
+				title: 'Notifications could not be loaded',
+			},
+			empty: {
+				kicker: 'Message Center',
+				title: 'No new notifications yet',
+				description: 'Requests, system alerts, and meet updates will all appear here.',
+			},
+		},
+		discover: {
+			error: {
+				kicker: 'Feed Sync',
+				title: 'Latest posts could not be loaded',
+			},
+			empty: {
+				kicker: 'Content Filter',
+				title: 'No matching content yet',
+				description: 'Try another filter, or post your first training update.',
+			},
+			inviteTarget: {
+				kicker: 'Invite Target',
+				title: 'No target selected yet',
+				description: 'Pick someone from the feed before sending an invite.',
+			},
+			invitePlace: {
+				kicker: 'Location Status',
+				title: 'The meetup location is still empty',
+				description: 'A clear venue or landmark helps the other side decide faster.',
+			},
+			commentTarget: {
+				kicker: 'Comment Target',
+				title: 'No post selected for comment',
+				description: 'Choose a post from the feed before writing your comment.',
+			},
+			commentInput: {
+				kicker: 'Comment Hint',
+				title: 'No comment entered yet',
+				description: 'A concrete reply is often better than a generic like.',
+			},
+			giftTarget: {
+				kicker: 'Prop Target',
+				title: 'No prop recipient selected yet',
+				description: 'Choose someone from the feed before continuing.',
+			},
+			giftSelect: {
+				kicker: 'Prop Selection',
+				title: 'Pick a prop first',
+				description: 'Choose a free prop before confirming.',
+			},
+			detailTarget: {
+				kicker: 'Post Details',
+				title: 'No post selected yet',
+				description: 'Choose a post from the list to view full details.',
+			},
+			detailCover: {
+				kicker: 'Cover Placeholder',
+				title: 'This post has no cover yet',
+				description: 'You can still read the content and interact from here.',
+			},
+			detailContent: {
+				kicker: 'Content Status',
+				title: 'This post has no body text yet',
+				description: 'Check the tags and stats, or start a chat directly.',
+			},
+			publishCover: {
+				kicker: 'Cover Placeholder',
+				title: 'Add a cover image',
+				description: 'Uploading one makes the post card feel more complete and easier to notice.',
+			},
+		},
+		filter: {
+			empty: {
+				kicker: 'Filter Options',
+				genderTitle: 'No gender options available',
+				genderDesc: 'Options will appear here when they are ready.',
+				distanceTitle: 'No distance options available',
+				distanceDesc: 'Distance options will appear here when they are ready.',
+				typeTitle: 'No activity options available',
+				typeDesc: 'Activity options will appear here when they are ready.',
+				levelTitle: 'No level options available',
+				levelDesc: 'Level options will appear here when they are ready.',
+			},
+		},
+		meet: {
+			needError: {
+				kicker: 'Meet Sync',
+				title: 'Meet requests could not be loaded',
+			},
+			needEmpty: {
+				kicker: 'Request Pool',
+				title: 'No matching meet requests yet',
+				description: 'Try another filter, or post your own training plan first.',
+			},
+			coachError: {
+				kicker: 'Coach Sync',
+				title: 'Coach list could not be loaded',
+			},
+			coachEmpty: {
+				kicker: 'Coach Picks',
+				title: 'No recommended coaches yet',
+				description: 'Check back later, or post your goal from the partner tab first.',
+			},
+			bookNoCoach: {
+				kicker: 'Booking Status',
+				title: 'No coach selected yet',
+				description: 'Pick a coach from the list before filling in booking details.',
+			},
+			bookNoTag: {
+				kicker: 'Booking Item',
+				title: 'This coach has no bookable items yet',
+				description: 'Try again later, or choose another coach.',
+			},
+			inboxError: {
+				kicker: 'Chat Sync',
+				title: 'Inbox list could not be loaded',
+			},
+			inboxEmpty: {
+				kicker: 'Recent Chats',
+				title: 'No private chats yet',
+				description: 'Start talking to nearby partners and new chats will show up here.',
+			},
+			mapEmpty: {
+				kicker: 'Map Marker',
+				title: 'No markers yet',
+				description: 'After you post a meet request, locations will appear here on the map.',
+			},
+			publishLocation: {
+				kicker: 'Location Status',
+				title: 'No location selected yet',
+				description: 'Picking a point on the map helps match nearby people more accurately.',
+			},
+			detailEmpty: {
+				kicker: 'Request Detail',
+				title: 'No request details yet',
+				description: 'Choose a meet request from the list first.',
+			},
+			detailDescEmpty: {
+				kicker: 'Extra Notes',
+				title: 'No extra notes from this user yet',
+				description: 'You can contact them first to confirm goals and timing.',
+			},
+			coachListEmpty: {
+				kicker: 'Coach Picks',
+				title: 'No recommended coaches yet',
+				description: 'Try again later, or adjust your filter preferences first.',
+			},
+		},
+		profile: {
+			syncError: {
+				kicker: 'Profile Sync',
+				title: 'Profile data could not be loaded',
+				description: 'Try again in a moment. Cached content is still safe.',
+			},
+			avatarEmpty: {
+				kicker: 'Avatar Status',
+				title: 'No avatar set yet',
+				description: 'An avatar makes you easier to recognize in chat, meetups, and feed cards.',
+			},
+			incomeEmpty: {
+				kicker: 'Income Records',
+				title: 'No income records yet',
+				description: 'Income from meetups, lessons, or gifts will be summarized here.',
+			},
+			studentsEmpty: {
+				kicker: 'Student List',
+				title: 'No students yet',
+				description: 'Students will appear here after new bookings or chat records are created.',
+			},
+			coachSettingsEmpty: {
+				kicker: 'Profile Completion',
+				title: 'Coach info is still incomplete',
+				description: 'Adding specialties and experience usually improves booking conversion.',
+			},
+		},
+	},
+	login: {
+		phoneLogin: 'After logging in, you can show yourself',
+		phoneLoginTip: 'Unregistered mobile phone numbers will be automatically registered after verification',
+		getVerifyCode: 'Get Code',
+		page: {
+			brandKicker: 'Training Community',
+			brandSlogan: 'Meet better workout partners',
+			entrySlogan: 'Sign in to use feed, meet, and private chat features.',
+			tabsLabel: 'Sign-in methods',
+			smsTab: 'SMS sign in',
+			pwdTab: 'Password sign in',
+			loginAction: 'Sign in',
+			loading: 'Signing in...',
+			success: 'Signed in',
+			loginFailedTitle: 'Sign-in issue',
+			busyTitle: 'Service busy',
+			busyContent: 'Database resources are at capacity. Please try again later or contact the administrator to upgrade the cloud service.',
+			whitelistBlockedContent: 'The request was blocked by the WeChat domain allowlist. Add this request domain in WeChat Official Account Platform > Development > Server Domains, then retry with domain checks disabled in the developer tool.{debugInfo}',
+			whitelistDebugPrefix: '\n\nDebug URL: {url}',
+			whitelistDebugFallback: '\n\nDebug URL: could not be parsed from the error. Check the full console output. If you are running the WeChat mini program through HBuilderX, make sure uniCloud mp-weixin launchtype is set to remote to avoid local debug routing.',
+			weixinAuthorizeFailed: 'WeChat authorization failed. Please retry on a real device or use another sign-in method.',
+			genericRetry: 'Please try again later',
+			unsupportedCountry: 'Other regions are not supported yet',
+			withoutPwd: {
+				weixinPrimary: 'One-tap WeChat sign in',
+				weixinSecondary: 'Use basic WeChat auth only',
+				weixinTip: 'Phone-based WeChat sign-in is recommended. New accounts will be created automatically.',
+				weixinAuthTip: 'Basic WeChat authorization is used by default. Authorize your phone number as well for a smoother experience.',
+				quickLoginTip: 'Authorize to continue matching partners, chatting, and tracking workouts',
+				weixinMobileButton: 'Authorize phone and sign in',
+				weixinPhoneAuthFailed: 'WeChat phone authorization failed. Check the uni-id mp-weixin configuration (appid / appsecret / service space) and try again.',
+				smsEntryTip: 'Enter your phone number to get a code and continue',
+				smsEntryButton: 'Get SMS code',
+				phonePlaceholder: 'Enter phone number',
+				invalidPhone: 'Enter a valid phone number',
+				cancelPhoneAuth: 'Phone authorization was cancelled',
+				missingPhoneAuth: 'Phone authorization was not received. Please try again.',
+				missingWxCode: 'Could not fetch a login code from WeChat. Please try again.'
+			},
+			pwd: {
+				title: 'Password sign in',
+				tip: 'For existing accounts, enter your phone number, username, or email with your password to continue.',
+				usernamePlaceholder: 'Enter phone / username / email',
+				passwordPlaceholder: 'Enter password',
+				button: 'Sign in and continue',
+				forgetHint: 'Forgot password?',
+				retrieve: 'Recover password',
+				register: 'Create account',
+				adminRegister: 'Create admin account',
+				passwordRequired: 'Enter your password',
+				accountRequired: 'Enter your phone number, username, or email',
+				captchaRequired: 'Enter the captcha code',
+				imageCaptchaRequired: 'Enter the image captcha code'
+			},
+			sms: {
+				title: 'Enter verification code',
+				tip: 'A verification code was sent to {phone}. Enter it to finish signing in.',
+				button: 'Verify and sign in',
+				codeRequired: 'Enter the 6-digit verification code'
+			},
+			password: {
+				noPwd: 'Enter password',
+				noRePwd: 'Enter the password again',
+				rePwdErr: 'The two passwords do not match',
+				strength: {
+					super: 'Password must include uppercase, lowercase, numbers, and symbols, with a length of 8-16 characters',
+					strong: 'Password must include letters, numbers, and symbols, with a length of 8-16 characters',
+					medium: 'Password must contain any two of letters, numbers, and symbols, with a length of 8-16 characters',
+					weak: 'Password must include letters and numbers, with a length of 6-16 characters'
+				}
+			},
+			register: {
+				common: {
+					usernamePlaceholder: 'Enter username',
+					nicknamePlaceholder: 'Enter nickname',
+					passwordPlaceholder: 'Enter a {min}-16 character password',
+					passwordAgainPlaceholder: 'Enter the password again',
+					back: 'Back',
+					toLogin: 'Already have an account? Sign in'
+				},
+				username: {
+					title: 'Create account',
+					tip: 'Create your account to continue matching partners, chatting, and tracking workouts',
+					button: 'Register and continue',
+					emailSwitch: 'Use email verification to register'
+				},
+				email: {
+					title: 'Register with email',
+					tip: 'Finish registration with an email code, then sign in right away',
+					emailPlaceholder: 'Enter email',
+					button: 'Complete registration',
+					usernameSwitch: 'Use username and password instead',
+					success: 'Registration complete. Please sign in.'
+				},
+				admin: {
+					title: 'Create super admin',
+					tip: 'Use this to initialize the admin account and keep the credentials safe',
+					button: 'Create admin',
+					success: 'Admin account created'
+				},
+				rules: {
+					usernameRequired: 'Enter username',
+					usernameLength: 'Username must be between {minLength} and {maxLength} characters',
+					usernameNoPhoneOrEmail: 'Username cannot be a phone number or email',
+					usernameNoNumber: 'Username cannot be all numbers',
+					usernameNoChinese: 'Username cannot contain Chinese characters',
+					usernameLabel: 'Username',
+					nicknameLength: 'Nickname must be between {minLength} and {maxLength} characters',
+					nicknameNoPhoneOrEmail: 'Nickname cannot be a phone number or email',
+					nicknameNoNumber: 'Nickname cannot be all numbers',
+					nicknameNoChinese: 'Nickname cannot contain Chinese characters',
+					nicknameLabel: 'Nickname',
+					emailRequired: 'Enter email',
+					emailInvalid: 'Enter a valid email address',
+					emailCodeRequired: 'Enter the email verification code',
+					emailCodeInvalid: 'Enter a valid email verification code'
+				}
+			},
+			retrieve: {
+				common: {
+					newPasswordPlaceholder: 'Enter new password',
+					passwordAgainPlaceholder: 'Enter the new password again',
+					backLogin: 'Back to sign in',
+					success: 'Password reset. Please sign in again.'
+				},
+				sms: {
+					title: 'Recover password by SMS',
+					tip: 'Reset your password after SMS verification succeeds.',
+					phonePlaceholder: 'Enter phone number',
+					button: 'Reset password',
+					emailSwitch: 'Recover by email verification code',
+					phoneRequired: 'Enter phone number',
+					phoneInvalid: 'Enter a valid phone number',
+					smsCodeRequired: 'Enter the SMS verification code',
+					smsCodeInvalid: 'Enter the 6-digit verification code',
+					passwordRequired: 'Enter new password',
+					passwordConfirmRequired: 'Confirm the password'
+				},
+				email: {
+					title: 'Recover password by email',
+					tip: 'Reset your password after email verification succeeds.',
+					emailPlaceholder: 'Enter email',
+					button: 'Reset password',
+					smsSwitch: 'Recover by phone verification code',
+					emailRequired: 'Enter email',
+					emailInvalid: 'Enter a valid email address',
+					emailCodeRequired: 'Enter the email verification code',
+					emailCodeInvalid: 'Enter the 6-digit verification code'
+				}
+			},
+			bindMobile: {
+				title: 'Bind phone number',
+				tip: 'Bind your phone number to sign in with it and unlock the full experience.',
+				mobilePlaceholder: 'Enter phone number',
+				button: 'Bind and continue',
+				loading: 'Binding...',
+				success: 'Phone number bound',
+				phoneInvalid: 'Enter a valid phone number',
+				codeInvalid: 'Enter a valid verification code',
+				failed: 'Binding failed. Please try again later.'
+			}
+		}
 	},
 }

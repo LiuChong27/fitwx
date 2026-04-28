@@ -1,114 +1,187 @@
 <template>
-	<view class="tiktok-card" role="article" :aria-label="item.nickname + '的动态'">
-		<!-- Full Screen Background -->
-		<image 
-			class="tiktok-bg" 
-			:src="optimizedCover" 
-			mode="aspectFill" 
-			aria-hidden="true"
-			@click="onBgClick"
-		/>
-		
-		<!-- Gradient Overlay -->
-		<view class="tiktok-overlay"></view>
+	<view class="feed-card" :style="{ '--enter-index': index }" role="article" :aria-label="item.nickname + '的训练笔记'" @click="onBgClick">
+		<view v-if="showCoverPlaceholder" class="feed-cover-placeholder" :class="{ 'feed-cover-placeholder--loading': showCoverLoading }" aria-hidden="true">
+			<fit-shimmer-block v-if="showCoverLoading" width="100%" height="100%" radius="0" />
+			<view v-else class="feed-cover-fallback">
+				<uni-icons type="image" size="32" color="rgba(255,255,255,0.2)" />
+			</view>
+		</view>
+		<image v-if="displayCover && !coverFailed" class="feed-cover" :class="{ 'feed-cover--ready': coverLoaded }" :src="displayCover" :mode="coverMode" aria-hidden="true" @load="handleCoverLoad" @error="handleCoverError" />
+		<view class="feed-overlay"></view>
 
-		<!-- Right Side Actions -->
-		<view class="tiktok-actions">
-			<view class="action-item" role="button" aria-label="查看用户资料" @click.stop="$emit('goProfile')">
-				<image class="action-avatar" :src="optimizedAvatar" mode="aspectFill" aria-hidden="true" />
-				<view class="action-add" v-if="!item.followed" aria-hidden="true">
-					<uni-icons type="plusempty" size="12" color="#fff" />
+		<view class="feed-badge">{{ item.isMine ? (item.statusLabel || '我的笔记') : formatDistance(item.distanceKm) }}</view>
+
+		<view class="feed-content-panel">
+			<view class="feed-author" role="button" @click.stop="$emit('goProfile')">
+				<image v-if="displayAvatar" class="feed-avatar" :src="displayAvatar" mode="aspectFill" aria-hidden="true" />
+				<view v-else class="feed-avatar feed-avatar--empty" aria-hidden="true">
+					<uni-icons type="person-filled" size="18" color="rgba(255,255,255,0.42)" />
+				</view>
+				<view class="feed-author__text">
+					<text class="feed-name">{{ item.nickname || '用户' }}</text>
+					<text class="feed-meta">{{ item.location || '附近训练' }} · {{ formatDistance(item.distanceKm) }}</text>
 				</view>
 			</view>
-			
-			<view class="action-item" role="button" :aria-label="item.liked ? '取消点赞' : '点赞'" @click.stop="$emit('like')">
-				<uni-icons :type="item.liked ? 'heart-filled' : 'heart'" size="35" :color="item.liked ? '#f85149' : '#fff'" />
-				<text class="action-text">{{ formatCount(item.likeCount) }}</text>
+
+			<view class="feed-excerpt" v-if="item.content">
+				<text>{{ item.content }}</text>
 			</view>
-			
-			<view class="action-item" role="button" aria-label="评论" @click.stop="$emit('comment')">
-				<uni-icons type="chatbubble-filled" size="32" color="#fff" />
-				<text class="action-text">{{ formatCount(item.commentCount) }}</text>
+			<view v-if="item.tags && item.tags.length" class="feed-tags">
+				<text v-for="tag in item.tags.slice(0, 3)" :key="tag" class="feed-tag">#{{ tag }}</text>
+			</view>
+		</view>
+
+		<view class="feed-sidebar-col">
+			<view class="sidebar-item" role="button" :aria-label="item.liked ? '取消点赞' : '点赞'" @click.stop="$emit('like')">
+				<uni-icons :type="item.liked ? 'heart-filled' : 'heart'" size="32" :color="item.liked ? '#FF7A7A' : '#72E4C8'" />
+				<text class="sidebar-value">{{ formatCount(item.likeCount) }}</text>
+			</view>
+			<view class="sidebar-item" role="button" aria-label="评论" @click.stop="$emit('comment')">
+				<uni-icons type="chatbubble" size="32" color="#BCEBDD" />
+				<text class="sidebar-value">{{ formatCount(item.commentCount) }}</text>
 			</view>
 
-
-			<!-- 本人发布：编辑/删除；他人发布：约练/私信/关注 -->
-			<template v-if="item.isMine">
-				<view class="action-item" @click.stop="$emit('edit')">
-					<uni-icons type="compose" size="32" color="#fff" />
-					<text class="action-text">编辑</text>
+			<template v-if="item.isMine && item.status !== 2">
+				<view class="sidebar-item" role="button" aria-label="编辑" @click.stop="$emit('edit')">
+					<uni-icons type="compose" size="32" color="rgba(255, 255, 255, 0.82)" />
+					<text class="sidebar-value">编辑</text>
 				</view>
-				<view class="action-item" @click.stop="$emit('delete')">
-					<uni-icons type="trash" size="32" color="#fff" />
-					<text class="action-text">删除</text>
+				<view class="sidebar-item" role="button" aria-label="删除" @click.stop="$emit('delete')">
+					<uni-icons type="trash" size="32" color="#FF8F8F" />
+					<text class="sidebar-value danger">删除</text>
+				</view>
+			</template>
+			<template v-else-if="item.isMine">
+				<view class="sidebar-item" aria-label="已删除笔记">
+					<uni-icons type="info" size="32" color="rgba(255, 255, 255, 0.58)" />
+					<text class="sidebar-value">已删除</text>
 				</view>
 			</template>
 			<template v-else>
-				<view class="action-item" @click.stop="$emit('invite')">
-					<view class="icon-circle btn-meet">
-						<uni-icons type="paperplane-filled" size="20" color="#fff" />
-					</view>
-					<text class="action-text">约练</text>
+				<view class="sidebar-item" role="button" aria-label="私信" @click.stop="$emit('chat')">
+					<uni-icons type="chatboxes" size="32" color="rgba(255, 255, 255, 0.82)" />
+					<text class="sidebar-value">私信</text>
 				</view>
-				
-				<view class="action-item" @click.stop="$emit('chat')">
-					<uni-icons type="chatbubbles-filled" size="32" color="#fff" />
-					<text class="action-text">私信</text>
+				<view v-if="canInvite" class="sidebar-item" role="button" aria-label="约练" @click.stop="$emit('invite')">
+					<uni-icons type="flag" size="32" color="#72E4C8" />
+					<text class="sidebar-value primary">约练</text>
 				</view>
 			</template>
-		</view>
-
-		<!-- Bottom Info -->
-		<view class="tiktok-info">
-			<view class="info-user" @click.stop="$emit('goProfile')">
-				<text class="info-nickname">@{{ item.nickname }}</text>
-			</view>
-			
-			<view class="info-content-box">
-				<text class="info-content">{{ item.content }}</text>
-			</view>
-			
-			<view class="info-tags" v-if="item.tags && item.tags.length">
-				<text class="info-tag" v-for="(tag, i) in item.tags" :key="i">#{{ tag }}</text>
-			</view>
-			
-			<view class="info-location" v-if="item.distanceKm || item.location">
-				<uni-icons type="location-filled" size="14" color="rgba(255,255,255,0.8)" />
-				<text class="location-text">
-					{{ item.location || '未知位置' }} · {{ formatDistance(item.distanceKm) }}
-				</text>
-			</view>
 		</view>
 	</view>
 </template>
 
 <script>
+	import FitShimmerBlock from '@/components/fit-shimmer-block.vue';
+	import { webpUrl as imgUrl, avatarUrl as avUrl } from '@/common/imageOptimizer.js';
+
 	export default {
+		components: {
+			FitShimmerBlock
+		},
+		data() {
+			return {
+				coverLoaded: false,
+				coverFailed: false,
+				coverRatio: 0
+			};
+		},
 		props: {
 			item: {
 				type: Object,
 				default: () => ({})
-			}
-		},		computed: {
-			optimizedCover() {
-				const { coverUrl: cvUrl } = require('@/common/imageOptimizer.js');
-				return this.item.cover ? cvUrl(this.item.cover) : '';
 			},
-			optimizedAvatar() {
-				const { avatarUrl: avUrl } = require('@/common/imageOptimizer.js');
+			index: {
+				type: Number,
+				default: 0
+			}
+		},
+		computed: {
+			defaultCover() {
+				return '';
+			},
+			displayCover() {
+				return this.optimizedCover || this.defaultCover;
+			},
+			optimizedCover() {
+				const coverSource = this.pickImageUrl(
+					this.item.cover ||
+					this.item.photo ||
+					this.item.image ||
+					this.item.coverUrl ||
+					this.item.images ||
+					this.item.photos ||
+					this.item.media
+				);
+				return coverSource ? imgUrl(coverSource) : '';
+			},
+			displayAvatar() {
 				return this.item.avatar ? avUrl(this.item.avatar) : '';
 			},
-		},		methods: {
+			coverMode() {
+				return this.coverRatio > 0 && this.coverRatio < 0.78 ? 'aspectFit' : 'aspectFill';
+			},
+			canInvite() {
+				const distance = Number(this.item.distanceKm);
+				return Number.isFinite(distance) && distance <= 10;
+			},
+			showCoverLoading() {
+				return !!this.displayCover && !this.coverLoaded && !this.coverFailed;
+			},
+			showCoverPlaceholder() {
+				return !this.displayCover || this.coverFailed || this.showCoverLoading;
+			}
+		},
+		watch: {
+			'item.id'() {
+				this.resetImageState();
+			},
+			displayCover() {
+				this.coverLoaded = false;
+				this.coverFailed = false;
+				this.coverRatio = 0;
+			}
+		},
+		methods: {
+			resetImageState() {
+				this.coverLoaded = false;
+				this.coverFailed = false;
+				this.coverRatio = 0;
+			},
+			pickImageUrl(source) {
+				if (!source) return '';
+				if (typeof source === 'string') return source;
+				if (Array.isArray(source)) {
+					for (const item of source) {
+						const url = this.pickImageUrl(item);
+						if (url) return url;
+					}
+					return '';
+				}
+				if (typeof source === 'object') {
+					return source.url || source.path || source.fileID || source.fileId || source.src || '';
+				}
+				return '';
+			},
 			formatCount(num) {
 				if (!num) return '0';
 				return num > 999 ? (num / 1000).toFixed(1) + 'k' : num;
 			},
 			formatDistance(km) {
-				if (!km) return '';
-				return km < 1 ? '<1km' : `${km}km`;
+				if (!km) return '附近';
+				return km < 1 ? '1km内' : `${Number(km).toFixed(1)}km`;
+			},
+			handleCoverLoad(e) {
+				this.coverLoaded = true;
+				const width = Number(e?.detail?.width || 0);
+				const height = Number(e?.detail?.height || 0);
+				this.coverRatio = width > 0 && height > 0 ? width / height : 0;
+			},
+			handleCoverError() {
+				this.coverFailed = true;
+				this.coverLoaded = false;
 			},
 			onBgClick() {
-				// Double tap logic could go here
 				this.$emit('cardClick');
 			}
 		}
@@ -118,185 +191,202 @@
 <style lang="scss" scoped>
 	@import "@/uni.scss";
 
-	.tiktok-card {
+	.feed-card {
 		position: relative;
 		width: 100%;
-		height: 100%;
-		background: $neu-dark-bg;
+		height: 520rpx;
+		border-radius: 24rpx;
+		background: linear-gradient(135deg, rgba(14, 25, 35, 0.94), rgba(8, 19, 29, 0.98));
+		border: 1rpx solid rgba(255, 255, 255, 0.07);
 		overflow: hidden;
+		box-shadow: 0 14rpx 40rpx rgba(0, 0, 0, 0.20);
+		animation: feedCardReveal 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+		animation-delay: calc(var(--enter-index, 0) * 70ms);
+		transform-origin: center bottom;
+		margin-bottom: 20rpx;
 	}
 
-	.tiktok-bg {
+	.feed-cover-placeholder {
+		position: absolute;
+		inset: 0;
+	}
+
+	.feed-cover-placeholder--loading {
+		background: rgba(255, 255, 255, 0.04);
+	}
+
+	.feed-cover-fallback {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.feed-cover {
+		position: absolute;
+		inset: 0;
 		width: 100%;
 		height: 100%;
-		position: absolute;
-		top: 0;
-		left: 0;
-		transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		display: block;
+		opacity: 0;
+		transition: opacity 0.3s ease;
+		background: rgba(8, 19, 29, 0.62);
 	}
 
-	.tiktok-overlay {
+	.feed-cover--ready {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	.feed-overlay {
 		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		height: 55%;
-		background: linear-gradient(
-			to top,
-			rgba(10,22,40,0.95) 0%,
-			rgba(10,22,40,0.6) 40%,
-			rgba(10,22,40,0) 100%
-		);
+		inset: 0;
+		background: linear-gradient(180deg, rgba(6, 12, 18, 0.02) 0%, rgba(6, 12, 18, 0.0) 40%, rgba(6, 12, 18, 0.62) 100%);
 		pointer-events: none;
 	}
 
-	.tiktok-actions {
+	.feed-badge {
 		position: absolute;
-		right: 16rpx;
-		bottom: 120rpx;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 28rpx;
+		left: 24rpx;
+		top: 24rpx;
+		padding: 12rpx 22rpx;
+		border-radius: 999rpx;
+		background: rgba(8, 19, 29, 0.68);
+		border: 1rpx solid rgba(255, 255, 255, 0.07);
+		font-size: 24rpx;
+		font-weight: 650;
+		color: #F2FFFB;
 		z-index: 10;
 	}
 
-	.action-item {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		position: relative;
-		transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-		
-		&:active {
-			transform: scale(0.88);
-		}
-	}
-
-	.action-avatar {
-		width: 92rpx;
-		height: 92rpx;
-		border-radius: 50%;
-		border: 3rpx solid rgba(0, 229, 255, 0.5);
-		margin-bottom: 10rpx;
-		box-shadow: 0 4rpx 16rpx rgba(0, 229, 255, 0.15);
-		transition: border-color 0.3s;
-	}
-	
-	.action-add {
+	.feed-content-panel {
 		position: absolute;
-		bottom: 10rpx;
-		left: 50%;
-		transform: translateX(-50%);
-		width: 34rpx;
-		height: 34rpx;
-		background: linear-gradient(135deg, #00E5FF, #00B0FF);
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		box-shadow: 0 4rpx 12rpx rgba(0, 229, 255, 0.4);
-		animation: addBounce 2s ease-in-out infinite;
-	}
-	@keyframes addBounce {
-		0%, 100% { transform: translateX(-50%) scale(1); }
-		50% { transform: translateX(-50%) scale(1.15); }
-	}
-	
-	.icon-circle {
-		width: 82rpx;
-		height: 82rpx;
-		border-radius: 50%;
-		background: rgba(255,255,255,0.12);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 6rpx;
-		backdrop-filter: blur(8px);
-		border: 1rpx solid rgba(255,255,255,0.1);
-		transition: all 0.25s;
-		
-		&.btn-meet {
-			background: $sl-gradient-primary;
-			box-shadow: 0 4rpx 20rpx rgba(0, 229, 255, 0.4);
-			border: none;
-			animation: meetGlow 2.5s ease-in-out infinite;
-		}
-	}
-	@keyframes meetGlow {
-		0%, 100% { box-shadow: 0 4rpx 20rpx rgba(0, 229, 255, 0.35); }
-		50% { box-shadow: 0 4rpx 32rpx rgba(0, 229, 255, 0.55); }
-	}
-
-	.action-text {
-		color: #fff;
-		font-size: 22rpx;
-		text-shadow: 0 2rpx 6rpx rgba(0,0,0,0.6);
-		font-weight: 500;
-		letter-spacing: 0.5px;
-	}
-
-	.tiktok-info {
-		position: absolute;
-		left: 28rpx;
-		bottom: 120rpx;
-		right: 160rpx;
+		left: 24rpx;
+		right: 132rpx;
+		bottom: 28rpx;
 		z-index: 10;
+		padding: 20rpx 20rpx 18rpx;
+		border-radius: 26rpx;
+		background: rgba(7, 16, 25, 0.48);
+		border: 1rpx solid rgba(255, 255, 255, 0.08);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
+		box-shadow: 0 16rpx 34rpx rgba(0, 0, 0, 0.18);
+	}
+
+	.feed-author {
+		display: flex;
+		align-items: center;
+		gap: 14rpx;
+	}
+
+	.feed-avatar {
+		width: 64rpx;
+		height: 64rpx;
+		border-radius: 50%;
+		flex-shrink: 0;
+		border: 1rpx solid rgba(114, 228, 200, 0.18);
+	}
+
+	.feed-avatar--empty {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.05);
+	}
+
+	.feed-author__text {
+		flex: 1;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 16rpx;
+		gap: 4rpx;
 	}
 
-	.info-nickname {
-		font-size: 36rpx;
-		font-weight: 700;
-		color: #fff;
-		text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.6);
-	}
-
-	.info-content-box {
-		max-height: 120rpx;
-		overflow: hidden;
-	}
-
-	.info-content {
+	.feed-name {
 		font-size: 28rpx;
-		color: rgba(255,255,255,0.92);
+		font-weight: 650;
+		color: #FFFFFF;
+	}
+
+	.feed-meta {
+		font-size: 20rpx;
+		color: rgba(255, 255, 255, 0.56);
+	}
+
+	.feed-excerpt {
+		margin-top: 14rpx;
+		font-size: 26rpx;
 		line-height: 1.55;
-		text-shadow: 0 2rpx 4rpx rgba(0,0,0,0.5);
+		color: rgba(255, 255, 255, 0.92);
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
-	
-	.info-tags {
+
+	.feed-tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 12rpx;
+		gap: 10rpx;
+		margin-top: 14rpx;
 	}
-	
-	.info-tag {
-		font-size: 26rpx;
-		color: #00E5FF;
-		font-weight: 600;
-		text-shadow: 0 0 12rpx rgba(0, 229, 255, 0.3);
+
+	.feed-tag {
+		padding: 6rpx 14rpx;
+		border-radius: 999rpx;
+		background: rgba(114, 228, 200, 0.10);
+		border: 1rpx solid rgba(114, 228, 200, 0.14);
+		color: #8DE8D5;
+		font-size: 20rpx;
 	}
-	
-	.info-location {
+
+	.feed-sidebar-col {
+		position: absolute;
+		right: 24rpx;
+		bottom: 62rpx;
+		z-index: 10;
+		width: 88rpx;
 		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 30rpx;
+	}
+
+	.sidebar-item {
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 		gap: 8rpx;
-		background: rgba(0, 229, 255, 0.1);
-		padding: 8rpx 18rpx;
-		border-radius: 20rpx;
-		align-self: flex-start;
-		backdrop-filter: blur(6px);
-		border: 1px solid rgba(0, 229, 255, 0.12);
 	}
-	
-	.location-text {
-		font-size: 24rpx;
-		color: rgba(255,255,255,0.9);
+
+	.sidebar-value {
+		font-size: 22rpx;
+		font-weight: 650;
+		color: rgba(255, 255, 255, 0.92);
+		line-height: 1;
+		text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.45);
+
+		&.danger {
+			color: #FF8F8F;
+		}
+
+		&.primary {
+			color: #72E4C8;
+		}
+	}
+
+	@keyframes feedCardReveal {
+		from {
+			opacity: 0;
+			transform: translateY(28rpx) scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
 	}
 </style>

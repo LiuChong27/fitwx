@@ -18,17 +18,26 @@
           <button class="btn-ghost btn-sm" @click="$emit('chat', s)">私聊</button>
         </view>
       </view>
-      <view class="empty-tip" v-else>
-        <uni-icons type="contact" size="40" color="rgba(255,255,255,0.2)" />
-        <text class="empty-text">暂无学员</text>
-      </view>
+      <fit-state-panel
+        v-else
+        compact
+        scene="members"
+        :kicker="$t('state.profile.studentsEmpty.kicker')"
+        :title="$t('state.profile.studentsEmpty.title')"
+        :description="$t('state.profile.studentsEmpty.description')"
+      />
     </view>
   </uni-popup>
 </template>
 
 <script>
+  import FitStatePanel from '@/components/fit-state-panel.vue'
+
 export default {
   name: 'StudentsPopup',
+    components: {
+      FitStatePanel,
+    },
   props: {
     students: { type: Array, default: () => [] },
   },
@@ -113,17 +122,5 @@ export default {
   height: 56rpx;
   line-height: 56rpx;
   font-size: 24rpx;
-}
-.empty-tip {
-  @include sl-card;
-  padding: 60rpx 40rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16rpx;
-}
-.empty-text {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.45);
 }
 </style>

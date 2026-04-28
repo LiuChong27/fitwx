@@ -39,7 +39,13 @@
     <!-- 空状态 -->
     <view v-if="!loading && !list.length" class="virtual-list__empty">
       <slot name="empty">
-        <text class="empty-text">{{ emptyText }}</text>
+        <fit-state-panel
+          compact
+          :scene="emptyScene"
+          :kicker="emptyKicker"
+          :title="emptyText"
+          :description="emptyDescription"
+        />
       </slot>
     </view>
   </scroll-view>
@@ -47,9 +53,13 @@
 
 <script>
 import { throttle } from '@/common/utils.js'
+import FitStatePanel from '@/components/fit-state-panel.vue'
 
 export default {
   name: 'VirtualList',
+  components: {
+    FitStatePanel,
+  },
   props: {
     // 完整数据列表
     list: {
@@ -95,6 +105,18 @@ export default {
     emptyText: {
       type: String,
       default: '暂无数据',
+    },
+    emptyDescription: {
+      type: String,
+      default: '',
+    },
+    emptyScene: {
+      type: String,
+      default: 'default',
+    },
+    emptyKicker: {
+      type: String,
+      default: '列表状态',
     },
     // 自定义 class
     customClass: {
@@ -238,8 +260,7 @@ export default {
     padding: 32rpx 0;
   }
 
-  .no-more-text,
-  .empty-text {
+  .no-more-text {
     font-size: 26rpx;
     color: rgba(255, 255, 255, 0.45);
   }
